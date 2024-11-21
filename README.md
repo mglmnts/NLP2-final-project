@@ -1,7 +1,3 @@
-# NLP2-final-project
-
-
-```markdown
 # Guía de Instalación para el Proyecto Final de NLP
 
 **Autor:** Nombre del Autor  
