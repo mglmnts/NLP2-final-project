@@ -1,0 +1,70 @@
+{
+    "workbench.colorTheme": "Monokai",
+    "editor.multiCursorModifier": "ctrlCmd",
+    "liveServer.settings.CustomBrowser": "chrome",
+    "markdown-preview-enhanced.previewTheme": "github-dark.css",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    // flake-8 (creo que esto no vale para nada)
+    // creo que esta es la configuración de la extensión de flake-8
+    // yo uso la extension de black
+    "flake8.args": [
+      "--max-line-length",
+      "88",
+      "--extend-ignore",
+      "E203",
+      "--extend-ignore",
+      "E704"
+    ],
+    // markdown [.md]
+    "[markdown]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+      "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+      "editor.wordWrap": "on",
+    },
+    // markdown [.html]
+    "[html]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.tabSize": 2,
+      "editor.wordWrap": "on"
+    },
+    "[javascript]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.tabSize": 2
+    },
+    "[typescript]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.tabSize": 2
+    },
+    // react [.jsx]
+    "[jsx]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.tabSize": 2
+    },
+    // python [.py]
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.tabSize": 4,
+      "editor.rulers": [88],
+      "editor.detectIndentation": true,
+      "editor.insertSpaces": true
+    },
+    "explorer.confirmDelete": false,
+    "security.workspace.trust.untrustedFiles": "open",
+    "window.zoomLevel": -1,
+    "remote.SSH.remotePlatform": {
+      "10.120.107.121": "linux"
+    },
+    "python.defaultInterpreterPath": "",
+    "workbench.startupEditor": "none",
+    "remote.autoForwardPortsSource": "hybrid",
+    "editor.inlineSuggest.suppressSuggestions": true
+  }
+  
