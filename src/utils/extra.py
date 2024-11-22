@@ -1,4 +1,5 @@
 # Standard Library dependencies
+import os
 import regex as re
 from pathlib import Path
 
@@ -41,9 +42,23 @@ def get_src_path() -> Path:
     raise FileNotFoundError("The 'src' directory was not found in the path hierarchy.")
 
 
-def locate_data_path(dir_name: str) -> str:
+def locate_data_path(section: str, dir_name: str) -> str:
+    """
+    Locates the data path for the specified directory name within the
+    'data/explore-models' structure relative to the 'src' directory.
+    Creates the directory if it does not already exist.
+
+    Args:
+        dir_name (str): The name of the directory to locate or create.
+
+    Returns:
+        str: The absolute path to the specified directory.
+
+    Raises:
+        FileNotFoundError: If the 'src' directory cannot be located.
+    """
     src_path: str = get_src_path()
-    rel_path: str = f"data/explore-models/{dir_name}"
+    rel_path: str = f"data/{section}/{dir_name}"
     dir_path: str = os.path.join(src_path.parent, rel_path)
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path

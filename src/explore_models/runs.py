@@ -23,15 +23,14 @@ MODELS: list[dict[str, str]] = [
 ]
 
 
-SAVE_PATH: Callable[[str], str] = lambda dir_name: f"../data/explore-models/{dir_name}"
-
-
 def run20241122A() -> None:
 
     for info in MODELS:
 
         model_name: str = info["name"]
-        model_path: str = locate_data_path(dir_name=clean_string(model_name))
+        model_path: str = locate_data_path(
+            section="explore-models", dir_name=clean_string(model_name)
+        )
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25
