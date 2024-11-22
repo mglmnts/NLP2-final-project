@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 # ML dependencies
+import torch
 from peft import LoraConfig
 from transformers import TrainingArguments
 from trl import SFTTrainer, SFTConfig
@@ -14,6 +15,7 @@ from src.utils.extra import clean_string, get_src_path
 
 
 # Global Variables
+device: str = "cuda" if torch.cuda.is_available() else "cpu"
 MODELS: list[dict[str, str]] = [
     {"name": "meta-llama/Llama-3.1-8B"},
     {"name": "mistralai/Mistral-7B-v0.3"},
@@ -43,14 +45,14 @@ def run20241122A() -> None:
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25
-        max_steps: int = 1  # 100
+        max_steps: int = 100
         dataset_name: str = "GAIR/lima"
 
         # Train config
-        training_arguments: SFTConfig = SFTConfig(
+        training_arguments: SFTConfig = TrainingArguments(
             output_dir=model_path,
             eval_strategy="steps",
-            do_eval=True,
+            do_eval=False,
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
             gradient_accumulation_steps=2,
@@ -65,8 +67,30 @@ def run20241122A() -> None:
             lr_scheduler_type="linear",
             report_to="tensorboard",
             logging_dir=os.path.join(model_path, "logs"),
-            max_seq_length=512,
+            # max_seq_length=512,
         )
+
+        # # Train config
+        # training_arguments: SFTConfig = SFTConfig(
+        #     output_dir=model_path,
+        #     eval_strategy="steps",
+        #     do_eval=False,
+        #     optim="paged_adamw_8bit",
+        #     per_device_train_batch_size=4,
+        #     gradient_accumulation_steps=2,
+        #     per_device_eval_batch_size=2,
+        #     log_level="debug",
+        #     logging_steps=10,
+        #     learning_rate=1e-4,
+        #     eval_steps=eval_steps,
+        #     max_steps=max_steps,
+        #     save_steps=save_steps,
+        #     warmup_steps=warmup_steps,
+        #     lr_scheduler_type="linear",
+        #     report_to="tensorboard",
+        #     logging_dir=os.path.join(model_path, "logs"),
+        #     max_seq_length=512,
+        # )
 
         # # Initialize SFTConfig
         # sft_config: SFTConfig = SFTConfig()
@@ -102,6 +126,10 @@ def run20241122A() -> None:
             method=SFTTrainer,
             arguments=training_arguments,  # , method_config=sft_config
         )
+        model_interface.cleanup_model()
+        dataset_interface.cleanup_dataset()
+        torch.cuda.empty_cache()
+        input()
 
 
 if __name__ == "__main__":

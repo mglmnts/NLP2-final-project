@@ -15,7 +15,7 @@ from src.utils.extra import clean_string, get_src_path
 
 # Global Variables
 MODELS: list[dict[str, str]] = [
-    {"name": "meta-llama/Llama-3.1-8B"},
+    # {"name": "meta-llama/Llama-3.1-8B"},
     {"name": "mistralai/Mistral-7B-v0.3"},
     {"name": "Qwen/Qwen2.5-7B"},
     {"name": "ibm-granite/granite-3.0-8b-base"},
@@ -30,8 +30,6 @@ def locate_save_path(dir_name: str) -> str:
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path
 
-
-SAVE_PATH: Callable[[str], str] = lambda dir_name: f"../data/explore-models/{dir_name}"
 
 
 def run20241122A() -> None:

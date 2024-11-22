@@ -1,5 +1,6 @@
 # Standard Library dependencies
 import os
+import gc
 from typing import Optional, Type, Union
 
 # ML dependencies
@@ -32,6 +33,7 @@ PEFTType = Union[LoraConfig]
 # Global Variables
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 compute_dtype = getattr(torch, "bfloat16")  # Set computation data type to bfloat16
+# compute_dtype = getattr(torch, "float16")  # Set computation data type to bfloat16
 
 
 class DatasetInterface:
@@ -122,6 +124,13 @@ class DatasetInterface:
 
         return tokenization
 
+    def cleanup_dataset(self) -> None:
+        if self._dataset is not None:
+            del self._dataset
+            self._dataset = None
+        torch.cuda.empty_cache()
+        gc.collect()
+
 
 class ModelInterface:
     def __init__(self) -> None:
@@ -131,7 +140,7 @@ class ModelInterface:
             bnb_4bit_quant_type="nf4",  # Specify quantization type as Normal Float 4
             bnb_4bit_compute_dtype=compute_dtype,  # Set computation data type
             bnb_4bit_use_double_quant=True,  # Double quantization for better accuracy
-            load_in_8bit_fp32_cpu_offload=True,  # Enable CPU offloading for FP32
+            # load_in_8bit_fp32_cpu_offload=True,  # Enable CPU offloading for FP32
         )
 
         self._name: str
@@ -151,7 +160,7 @@ class ModelInterface:
         return self._model
 
     def load_model(self, name: str) -> None:
-        device_map: str = "balanced_low_0"  # auto
+        device_map: str = "auto"  # "balanced_low_0"  # auto
         self._model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=name,
             quantization_config=self._bnb_config,  # Apply quantization configuration
@@ -190,11 +199,27 @@ class ModelInterface:
             eval_dataset=self._dataset.test,
             peft_config=self._peft_config,
             tokenizer=self._dataset.tokenizer,
+            max_seq_length=512,  ####
             args=arguments,
         )
         trainer.train()
 
         return None
+
+    def cleanup_model(self) -> None:
+        """
+        Cleans up the model from GPU memory.
+        """
+        if self._model is not None:
+            # Move the model to CPU
+            self._model.to("cpu")
+            # Delete the model object
+            del self._model
+            self._model = None
+            # Clear GPU cache
+            torch.cuda.empty_cache()
+            # Run garbage collection
+            gc.collect()
 
     def from_checkpoint(self, cls, checkpoint_path: str) -> "ModelInterface":
         """
