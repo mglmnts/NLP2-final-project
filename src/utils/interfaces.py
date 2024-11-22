@@ -199,7 +199,6 @@ class ModelInterface:
             eval_dataset=self._dataset.test,
             peft_config=self._peft_config,
             tokenizer=self._dataset.tokenizer,
-            # max_seq_length=512,  ####
             args=arguments,
         )
         trainer.train()

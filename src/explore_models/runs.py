@@ -6,12 +6,11 @@ from typing import Callable
 # ML dependencies
 import torch
 from peft import LoraConfig
-from transformers import TrainingArguments
 from trl import SFTTrainer, SFTConfig
 
 # Internal dependencies
 from src.utils.interfaces import DatasetInterface, ModelInterface
-from src.utils.extra import clean_string, get_src_path
+from src.utils.extra import clean_string, locate_data_path
 
 
 # Global Variables
@@ -24,15 +23,6 @@ MODELS: list[dict[str, str]] = [
 ]
 
 
-# Functions
-def locate_save_path(dir_name: str) -> str:
-    src_path: str = get_src_path()
-    rel_path: str = f"data/explore-models/{dir_name}"
-    dir_path: str = os.path.join(src_path.parent, rel_path)
-    Path(dir_path).mkdir(parents=True, exist_ok=True)
-    return dir_path
-
-
 SAVE_PATH: Callable[[str], str] = lambda dir_name: f"../data/explore-models/{dir_name}"
 
 
@@ -41,7 +31,7 @@ def run20241122A() -> None:
     for info in MODELS:
 
         model_name: str = info["name"]
-        model_path: str = locate_save_path(dir_name=clean_string(model_name))
+        model_path: str = locate_data_path(dir_name=clean_string(model_name))
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25

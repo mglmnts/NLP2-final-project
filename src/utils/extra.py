@@ -39,3 +39,11 @@ def get_src_path() -> Path:
         if parent.name == "src":
             return parent
     raise FileNotFoundError("The 'src' directory was not found in the path hierarchy.")
+
+
+def locate_data_path(dir_name: str) -> str:
+    src_path: str = get_src_path()
+    rel_path: str = f"data/explore-models/{dir_name}"
+    dir_path: str = os.path.join(src_path.parent, rel_path)
+    Path(dir_path).mkdir(parents=True, exist_ok=True)
+    return dir_path
