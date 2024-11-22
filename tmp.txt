@@ -1,3 +1,7 @@
+LLAMA
+
+
+
 user@AA25LABIAP12:/mnt/c/Users/202105503/Data/NLP/NLP2-final-project$ python -m src.explore_models.runs
 2024-11-22 15:47:26.065987: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
 2024-11-22 15:47:26.073044: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:485] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
@@ -232,7 +236,7 @@ You shouldn't move a model that is dispatched using accelerate hooks.
 
 
 
-
+MISTRAL
 
 
 

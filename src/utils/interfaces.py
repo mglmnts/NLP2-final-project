@@ -5,7 +5,7 @@ from typing import Optional, Type, Union
 
 # ML dependencies
 import torch
-from datasets import Dataset, DatasetDict, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets
 from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
 from peft.config import PeftConfig
 from transformers import (
@@ -107,6 +107,7 @@ class DatasetInterface:
             BatchEncoding:
             The tokenized conversations with input_ids and attention_mask.
         """
+        assert False, examples
         # Join the list into a single string if it's a list of sentences
         joined_conversations: list[str] = [
             " ".join(conv) if isinstance(conv, list) else conv
@@ -220,7 +221,8 @@ class ModelInterface:
             # Run garbage collection
             gc.collect()
 
-    def from_checkpoint(self, cls, checkpoint_path: str) -> "ModelInterface":
+    @classmethod
+    def from_checkpoint(cls, checkpoint_path: str) -> "ModelInterface":
         """
         Class method to load the model and its configuration from a saved checkpoint.
 
