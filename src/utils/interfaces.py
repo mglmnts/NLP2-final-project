@@ -107,7 +107,6 @@ class DatasetInterface:
             BatchEncoding:
             The tokenized conversations with input_ids and attention_mask.
         """
-        assert False, examples
         # Join the list into a single string if it's a list of sentences
         joined_conversations: list[str] = [
             " ".join(conv) if isinstance(conv, list) else conv
@@ -206,19 +205,32 @@ class ModelInterface:
 
         return None
 
+    # def cleanup_model(self) -> None:
+    #     """
+    #     Cleans up the model from GPU memory.
+    #     """
+    #     if self._model is not None:
+    #         # Move the model to CPU
+    #         self._model.to("cpu")
+    #         # Delete the model object
+    #         del self._model
+    #         self._model = None
+    #         # Clear GPU cache
+    #         torch.cuda.empty_cache()
+    #         # Run garbage collection
+    #         gc.collect()
+
     def cleanup_model(self) -> None:
         """
         Cleans up the model from GPU memory.
         """
         if self._model is not None:
-            # Move the model to CPU
-            self._model.to("cpu")
-            # Delete the model object
+            # Elimina el modelo sin moverlo manualmente
             del self._model
             self._model = None
-            # Clear GPU cache
+            # Limpia la caché de GPU
             torch.cuda.empty_cache()
-            # Run garbage collection
+            # Ejecuta la recolección de basura
             gc.collect()
 
     @classmethod

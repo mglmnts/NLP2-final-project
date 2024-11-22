@@ -184,7 +184,7 @@ def run20241122A() -> None:
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25
-        max_steps: int = 100
+        max_steps: int = 1  # 00
 
         # Training configuration
         training_arguments: SFTConfig = SFTConfig(
@@ -233,7 +233,7 @@ def run20241122A() -> None:
 
         # Cleanup resources
         model_interface.cleanup_model()
-        dataset_interface.cleanup_dataset()
+        # dataset_interface.cleanup_dataset()
         torch.cuda.empty_cache()
         print(f"Completed training with PEFT method: {method_name}\n")
 
