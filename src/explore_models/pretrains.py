@@ -23,7 +23,7 @@ MODELS: dict = {
 SAVE_PATH: Callable[[str], str] = lambda dir_name: f"../data/explore-models/{dir_name}"
 
 
-if __name__ == "__main__":
+def benchmark20241122A() -> None:
 
     for info in MODELS:
 
@@ -80,3 +80,7 @@ if __name__ == "__main__":
 
         print(f"Training: {model_name}")
         model_interface.train(method=SFTTrainer, arguments=training_arguments)
+
+
+if __name__ == "__main__":
+    benchmark20241122A()
