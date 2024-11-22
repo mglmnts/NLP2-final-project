@@ -1,0 +1,238 @@
+user@AA25LABIAP12:/mnt/c/Users/202105503/Data/NLP/NLP2-final-project$ python -m src.explore_models.runs
+2024-11-22 15:47:26.065987: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2024-11-22 15:47:26.073044: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:485] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2024-11-22 15:47:26.081874: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:8454] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2024-11-22 15:47:26.084569: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1452] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2024-11-22 15:47:26.090660: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2024-11-22 15:47:26.559464: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████| 4/4 [00:04<00:00,  1.03s/it]Training: meta-llama/Llama-3.1-8B
+/home/user/.local/lib/python3.10/site-packages/huggingface_hub/utils/_deprecation.py:100: FutureWarning: Deprecated argument(s) used in '__init__': max_seq_length. Will not be supported from version '1.0.0'.
+
+Deprecated positional argument(s) used in SFTTrainer, please use the SFTConfig to set these arguments instead.
+  warnings.warn(message, FutureWarning)
+/home/user/.local/lib/python3.10/site-packages/trl/trainer/sft_trainer.py:283: UserWarning: You passed a `max_seq_length` argument to the SFTTrainer, the value you passed will override the one in the `SFTConfig`.
+  warnings.warn(
+/home/user/.local/lib/python3.10/site-packages/trl/trainer/sft_trainer.py:396: UserWarning: You passed a tokenizer with `padding_side` not equal to `right` to the SFTTrainer. This might lead to some unexpected behaviour due to overflow issues when training a model in half-precision. You might consider adding `tokenizer.padding_side = 'right'` to your code.
+  warnings.warn(
+max_steps is given, it will override any value given in num_train_epochs
+Currently training with a batch size of: 4
+***** Running training *****
+  Num examples = 1,030
+  Num Epochs = 1
+  Instantaneous batch size per device = 4
+  Total train batch size (w. parallel, distributed & accumulation) = 8
+  Gradient Accumulation steps = 2
+  Total optimization steps = 100
+  Number of trainable parameters = 41,943,040
+  0%|                                                                                           | 0/100 [00:00<?, ?it/s]`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+/home/user/.local/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:632: UserWarning: torch.utils.checkpoint: the use_reentrant parameter should be passed explicitly. In version 2.5 we will raise an exception if use_reentrant is not passed. use_reentrant=False is recommended, but if you need to preserve the current default behavior, you can pass use_reentrant=True. Refer to docs for more details on the differences between the two variants.
+  return fn(*args, **kwargs)
+{'loss': 2.0527, 'grad_norm': 0.19735419750213623, 'learning_rate': 4e-05, 'epoch': 0.08}
+ 10%|████████▏                                                                         | 10/100 [02:01<17:52, 11.92s/it]***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.870068311691284, 'eval_runtime': 144.6819, 'eval_samples_per_second': 2.074, 'eval_steps_per_second': 1.037, 'epoch': 0.08}
+{'loss': 2.161, 'grad_norm': 0.24609270691871643, 'learning_rate': 8e-05, 'epoch': 0.16}
+ 20%|████████████████▍                                                                 | 20/100 [06:24<18:04, 13.55s/it]***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.8382599353790283, 'eval_runtime': 145.7074, 'eval_samples_per_second': 2.059, 'eval_steps_per_second': 1.029, 'epoch': 0.16}
+{'loss': 2.0523, 'grad_norm': 0.39449745416641235, 'learning_rate': 9.333333333333334e-05, 'epoch': 0.23}
+ 30%|████████████████████████▌                                                         | 30/100 [10:48<15:57, 13.68s/it]***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.7681989669799805, 'eval_runtime': 146.1323, 'eval_samples_per_second': 2.053, 'eval_steps_per_second': 1.026, 'epoch': 0.23}
+{'loss': 2.0645, 'grad_norm': 0.41340261697769165, 'learning_rate': 8e-05, 'epoch': 0.31}
+ 40%|███████████████████████████████████████████████████████████████████████████████▌                                                                                                                       | 40/100 [15:14<13:49, 13.82s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.7156434059143066, 'eval_runtime': 148.7242, 'eval_samples_per_second': 2.017, 'eval_steps_per_second': 1.009, 'epoch': 0.31}
+ 45%|█████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                             | 45/100 [18:43<21:04, 22.99s/it]Saving model checkpoint to /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-45
+loading configuration file config.json from cache at /home/user/.cache/huggingface/hub/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b/config.json
+Model config LlamaConfig {
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128001,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 131072,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 8.0,
+    "high_freq_factor": 4.0,
+    "low_freq_factor": 1.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "llama3"
+  },
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.45.2",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+tokenizer config file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-45/tokenizer_config.json
+Special tokens file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-45/special_tokens_map.json
+/home/user/.local/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:632: UserWarning: torch.utils.checkpoint: the use_reentrant parameter should be passed explicitly. In version 2.5 we will raise an exception if use_reentrant is not passed. use_reentrant=False is recommended, but if you need to preserve the current default behavior, you can pass use_reentrant=True. Refer to docs for more details on the differences between the two variants.
+  return fn(*args, **kwargs)
+{'loss': 1.9585, 'grad_norm': 0.3110560178756714, 'learning_rate': 6.666666666666667e-05, 'epoch': 0.39}
+ 50%|███████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                   | 50/100 [19:43<11:31, 13.83s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.6787877082824707, 'eval_runtime': 146.0045, 'eval_samples_per_second': 2.055, 'eval_steps_per_second': 1.027, 'epoch': 0.39}
+{'loss': 1.8808, 'grad_norm': 0.40280991792678833, 'learning_rate': 5.333333333333333e-05, 'epoch': 0.47}
+ 60%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                               | 60/100 [24:08<09:09, 13.74s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.6481473445892334, 'eval_runtime': 145.8586, 'eval_samples_per_second': 2.057, 'eval_steps_per_second': 1.028, 'epoch': 0.47}
+{'loss': 1.9691, 'grad_norm': 0.2897949814796448, 'learning_rate': 4e-05, 'epoch': 0.54}
+ 70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                           | 70/100 [28:33<06:51, 13.73s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.6259167194366455, 'eval_runtime': 146.1016, 'eval_samples_per_second': 2.053, 'eval_steps_per_second': 1.027, 'epoch': 0.54}
+{'loss': 1.9821, 'grad_norm': 0.36570093035697937, 'learning_rate': 2.6666666666666667e-05, 'epoch': 0.62}
+ 80%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                       | 80/100 [32:58<04:34, 13.75s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.611025094985962, 'eval_runtime': 147.252, 'eval_samples_per_second': 2.037, 'eval_steps_per_second': 1.019, 'epoch': 0.62}
+{'loss': 2.0466, 'grad_norm': 0.46058082580566406, 'learning_rate': 1.3333333333333333e-05, 'epoch': 0.7}
+ 90%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                    | 90/100 [37:28<02:19, 14.00s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.598996877670288, 'eval_runtime': 149.6604, 'eval_samples_per_second': 2.005, 'eval_steps_per_second': 1.002, 'epoch': 0.7}
+ 90%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                    | 90/100 [39:57<02:19, 14.00s/itSaving model checkpoint to /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-90
+loading configuration file config.json from cache at /home/user/.cache/huggingface/hub/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b/config.json
+Model config LlamaConfig {
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128001,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 131072,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 8.0,
+    "high_freq_factor": 4.0,
+    "low_freq_factor": 1.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "llama3"
+  },
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.45.2",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+tokenizer config file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-90/tokenizer_config.json
+Special tokens file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-90/special_tokens_map.json
+/home/user/.local/lib/python3.10/site-packages/torch/_dynamo/eval_frame.py:632: UserWarning: torch.utils.checkpoint: the use_reentrant parameter should be passed explicitly. In version 2.5 we will raise an exception if use_reentrant is not passed. use_reentrant=False is recommended, but if you need to preserve the current default behavior, you can pass use_reentrant=True. Refer to docs for more details on the differences between the two variants.
+  return fn(*args, **kwargs)
+{'loss': 1.9671, 'grad_norm': 0.4200493097305298, 'learning_rate': 0.0, 'epoch': 0.78}
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [42:01<00:00, 14.05s/it]
+***** Running Evaluation *****
+  Num examples = 300
+  Batch size = 2
+{'eval_loss': 2.5948095321655273, 'eval_runtime': 146.785, 'eval_samples_per_second': 2.044, 'eval_steps_per_second': 1.022, 'epoch': 0.78}
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [44:28<00:00, 14.05s/itSaving model checkpoint to /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-100
+loading configuration file config.json from cache at /home/user/.cache/huggingface/hub/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b/config.json
+Model config LlamaConfig {
+  "architectures": [
+    "LlamaForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "eos_token_id": 128001,
+  "head_dim": 128,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 131072,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 8.0,
+    "high_freq_factor": 4.0,
+    "low_freq_factor": 1.0,
+    "original_max_position_embeddings": 8192,
+    "rope_type": "llama3"
+  },
+  "rope_theta": 500000.0,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.45.2",
+  "use_cache": true,
+  "vocab_size": 128256
+}
+
+tokenizer config file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-100/tokenizer_config.json
+Special tokens file saved in /mnt/c/Users/202105503/Data/NLP/NLP2-final-project/src/data/explore-models/meta-llamallama--b/checkpoint-100/special_tokens_map.json
+
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+{'train_runtime': 2669.0941, 'train_samples_per_second': 0.3, 'train_steps_per_second': 0.037, 'train_loss': 2.013462085723877, 'epoch': 0.78}
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [44:29<00:00, 26.69s/it]
+You shouldn't move a model that is dispatched using accelerate hooks.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

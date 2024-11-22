@@ -49,7 +49,7 @@ def run20241122A() -> None:
         dataset_name: str = "GAIR/lima"
 
         # Train config
-        training_arguments: SFTConfig = TrainingArguments(
+        training_arguments: SFTConfig = SFTConfig(
             output_dir=model_path,
             eval_strategy="steps",
             do_eval=False,
@@ -67,33 +67,8 @@ def run20241122A() -> None:
             lr_scheduler_type="linear",
             report_to="tensorboard",
             logging_dir=os.path.join(model_path, "logs"),
-            # max_seq_length=512,
+            max_seq_length=512,
         )
-
-        # # Train config
-        # training_arguments: SFTConfig = SFTConfig(
-        #     output_dir=model_path,
-        #     eval_strategy="steps",
-        #     do_eval=False,
-        #     optim="paged_adamw_8bit",
-        #     per_device_train_batch_size=4,
-        #     gradient_accumulation_steps=2,
-        #     per_device_eval_batch_size=2,
-        #     log_level="debug",
-        #     logging_steps=10,
-        #     learning_rate=1e-4,
-        #     eval_steps=eval_steps,
-        #     max_steps=max_steps,
-        #     save_steps=save_steps,
-        #     warmup_steps=warmup_steps,
-        #     lr_scheduler_type="linear",
-        #     report_to="tensorboard",
-        #     logging_dir=os.path.join(model_path, "logs"),
-        #     max_seq_length=512,
-        # )
-
-        # # Initialize SFTConfig
-        # sft_config: SFTConfig = SFTConfig()
 
         # Low-Rank Adaptation (LoRA) configuration for efficient fine-tuning
         peft_config = LoraConfig(
@@ -129,7 +104,7 @@ def run20241122A() -> None:
         model_interface.cleanup_model()
         dataset_interface.cleanup_dataset()
         torch.cuda.empty_cache()
-        input()
+        # input()
 
 
 if __name__ == "__main__":
