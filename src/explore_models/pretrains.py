@@ -1,4 +1,5 @@
 # Starndard Library dependencies
+import os
 from typing import Callable
 
 # ML dependencies
@@ -12,12 +13,12 @@ from src.utils.extra import clean_string
 
 
 # Global Variables
-MODELS: dict = {
+MODELS: list[dict[str, str]] = [
     {"name": "meta-llama/Llama-3.1-8B"},
     {"name": "mistralai/Mistral-7B-v0.3"},
     {"name": "Qwen/Qwen2.5-7B"},
     {"name": "ibm-granite/granite-3.0-8b-base"},
-}
+]
 
 # Functions
 SAVE_PATH: Callable[[str], str] = lambda dir_name: f"../data/explore-models/{dir_name}"
@@ -35,22 +36,25 @@ def benchmark20241122A() -> None:
 
         # Train config
         training_arguments: TrainingArguments = TrainingArguments(
-            output_dir=model_path,  # Director y for checkpoints and logs
-            eval_strategy="steps",  # Evaluation strategy: evaluate every few steps
-            do_eval=True,  # Enable evaluation during training
-            optim="paged_adamw_8bit",  # Use 8-bit AdamW optimizer for memory efficiency
-            per_device_train_batch_size=4,  # Batch size per device during training
-            gradient_accumulation_steps=2,  # Accumulate gradients over multiple steps
-            per_device_eval_batch_size=2,  # Batch size per device during evaluation
-            log_level="debug",  # Set logging level to debug for detailed logs
-            logging_steps=10,  # Log metrics every 10 steps
-            learning_rate=1e-4,  # Initial learning rate
-            eval_steps=eval_steps,  # Evaluate the model every 25 steps
-            max_steps=100,  # Total number of training steps
-            save_steps=save_steps,  # Save checkpoints every 25 steps
-            warmup_steps=25,  # Number of warmup steps for learning rate scheduler
-            lr_scheduler_type="linear",  # Use a linear learning rate scheduler
+            output_dir=model_path,
+            eval_strategy="steps",
+            do_eval=True,
+            optim="paged_adamw_8bit",
+            per_device_train_batch_size=4,
+            gradient_accumulation_steps=2,
+            per_device_eval_batch_size=2,
+            log_level="debug",
+            logging_steps=10,
+            learning_rate=1e-4,
+            eval_steps=eval_steps,
+            max_steps=100,
+            save_steps=save_steps,
+            warmup_steps=25,
+            lr_scheduler_type="linear",
+            report_to="tensorboard",
+            logging_dir=os.path.join(model_path, "logs"),
         )
+        # tensorboard --logdir=../data/explore-models/
 
         # Low-Rank Adaptation (LoRA) configuration for efficient fine-tuning
         peft_config = LoraConfig(
