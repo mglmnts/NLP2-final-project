@@ -21,8 +21,6 @@ from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.tokenization_utils_base import BatchEncoding
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
-# from evaluate.module import EvaluationModule
-from trl import SFTConfig  # PPOTrainer, PPOv2Trainer, DPOTrainer, SFTTrainer
 
 # from evaluate import load
 
@@ -41,6 +39,8 @@ class DatasetInterface:
     def __init__(
         self, dataset_name: str, model_name: Union[AutoModelForCausalLM, PeftModel]
     ) -> None:
+
+        self._dataset_name: str = dataset_name
 
         self._dataset: Union[Dataset, DatasetDict]
         self._tokenizer: PreTrainedTokenizerFast
@@ -86,7 +86,6 @@ class DatasetInterface:
             padding_side="left",  # Pad sequences on the left side
         )
         assert isinstance(tokenizer, PreTrainedTokenizerFast)
-        # ???
         tokenizer.pad_token = tokenizer.eos_token  # Set padding token to EOS token
 
         return tokenizer
@@ -107,11 +106,17 @@ class DatasetInterface:
             BatchEncoding:
             The tokenized conversations with input_ids and attention_mask.
         """
-        # Join the list into a single string if it's a list of sentences
-        joined_conversations: list[str] = [
-            " ".join(conv) if isinstance(conv, list) else conv
-            for conv in examples["conversations"]
-        ]
+        joined_conversations: list[str]
+        if all(substr in self._dataset_name.lower() for substr in ["lima"]):
+            joined_conversations = [
+                " ".join(conv) if isinstance(conv, list) else conv
+                for conv in examples["conversations"]
+            ]
+        if all(substr in self._dataset_name.lower() for substr in ["alpaca"]):
+            joined_conversations = [
+                " ".join(conv) if isinstance(conv, list) else conv
+                for conv in examples["conversations"]
+            ]
 
         # Tokenize the joined conversations
         tokenization: BatchEncoding = self._tokenizer(
@@ -246,6 +251,7 @@ class ModelInterface:
         """
 
         # Create a new instance
+        torch.cuda.empty_cache()
         instance: ModelInterface = cls()
 
         # Validate checkpoint path
@@ -253,45 +259,12 @@ class ModelInterface:
             raise ValueError(
                 f"Checkpoint path '{checkpoint_path}' is not a valid directory."
             )
-
-        # Load model configuration to retrieve model name
-        try:
-            config: AutoConfig = AutoConfig.from_pretrained(checkpoint_path)
-            model_name: str = config._name_or_path
-            instance._name = model_name
-        except Exception as e:
-            raise ValueError(
-                f"Failed to load configuration from '{checkpoint_path}': {e}"
-            )
-
-        # Load the base model
-        try:
-            base_model: AutoModelForCausalLM = AutoModelForCausalLM.from_pretrained(
-                checkpoint_path,
-                quantization_config=instance._bnb_config,  # quantization configuration
-                device_map="auto",  # Automatically map layers to devices
-            )
-            instance._model = base_model
-        except Exception as e:
-            raise ValueError(f"Failed to load model from '{checkpoint_path}': {e}")
-
-        # Check for PEFT configuration
-        peft_config_path: str = os.path.join(checkpoint_path, "adapter_config.json")
-        if os.path.isfile(peft_config_path):
-            try:
-                # Load the PEFT configuration
-                peft_config: PeftConfig = PeftConfig.from_pretrained(checkpoint_path)
-                instance._peft_config = peft_config
-
-                # Wrap the base model with PeftModel
-                peft_model: PeftModel = PeftModel.from_pretrained(
-                    base_model,
-                    checkpoint_path,
-                )
-                instance._model = peft_model
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to load PEFT configuration from '{peft_config_path}': {e}"
-                )
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = AutoModelForCausalLM.from_pretrained(
+            checkpoint_path, device_map=device, trust_remote_code=True
+        )
+        instance._model = model
+        instance._name = model.config.model_type
+        instance._tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
 
         return instance
