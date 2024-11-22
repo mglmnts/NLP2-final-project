@@ -28,7 +28,7 @@ MODELS: list[dict[str, str]] = [
 def locate_save_path(dir_name: str) -> str:
     src_path: str = get_src_path()
     rel_path: str = f"data/explore-models/{dir_name}"
-    dir_path: str = os.path.join(src_path, rel_path)
+    dir_path: str = os.path.join(src_path.parent, rel_path)
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path
 
