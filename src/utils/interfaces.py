@@ -1,6 +1,6 @@
 # Standard Library dependencies
 import os
-from typing import Optional, Union
+from typing import Optional, Type, Union
 
 # ML dependencies
 import torch
@@ -12,6 +12,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    PreTrainedModel,
     Trainer,
     TrainingArguments,
 )
@@ -20,7 +21,8 @@ from transformers.tokenization_utils_base import BatchEncoding
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 # from evaluate.module import EvaluationModule
-# from trl import PPOTrainer, PPOv2Trainer, DPOTrainer, SFTTrainer
+from trl import SFTConfig  # PPOTrainer, PPOv2Trainer, DPOTrainer, SFTTrainer
+
 # from evaluate import load
 
 
@@ -42,7 +44,7 @@ class DatasetInterface:
         self._tokenizer: PreTrainedTokenizerFast
         self._tokenized_dataset: Union[Dataset, DatasetDict]
 
-        self._dataset = load_dataset(name=dataset_name)
+        self._dataset = load_dataset(path=dataset_name)
         self._tokenizer = self._load_model_tokenizer(model_name=model_name)
 
         # tokenize the dataset
@@ -129,6 +131,7 @@ class ModelInterface:
             bnb_4bit_quant_type="nf4",  # Specify quantization type as Normal Float 4
             bnb_4bit_compute_dtype=compute_dtype,  # Set computation data type
             bnb_4bit_use_double_quant=True,  # Double quantization for better accuracy
+            load_in_8bit_fp32_cpu_offload=True,  # Enable CPU offloading for FP32
         )
 
         self._name: str
@@ -148,13 +151,14 @@ class ModelInterface:
         return self._model
 
     def load_model(self, name: str) -> None:
+        device_map: str = "balanced_low_0"  # auto
         self._model = AutoModelForCausalLM.from_pretrained(
-            name,
+            pretrained_model_name_or_path=name,
             quantization_config=self._bnb_config,  # Apply quantization configuration
-            device_map="auto",  # Automatically map layers to devices
+            device_map=device_map,  # Automatically map layers to devices
         )
         self._name = name
-        self.model = prepare_model_for_kbit_training(self.model)
+        self._model = prepare_model_for_kbit_training(self._model)
         return None
 
     def load_PEFT_config(self, config: PeftConfig) -> None:
@@ -163,24 +167,28 @@ class ModelInterface:
         return None
 
     def load_dataset(self, interface: DatasetInterface) -> None:
-        assert isinstance(interface, Dataset)
+        assert isinstance(interface, DatasetInterface)
         self._dataset = interface
         # Set the model's padding token ID
-        self.model.config.pad_token_id = self._dataset.tokenizer.pad_token_id
+        self._model.config.pad_token_id = self._dataset.tokenizer.pad_token_id
         return None
 
-    def train(self, method: type[Trainer], arguments: TrainingArguments) -> None:
-        assert isinstance(method, Trainer)
-        assert isinstance(self._model, (AutoModelForCausalLM, PeftModel))
-        assert isinstance(self._peft_config, PeftConfig)
+    def train(
+        self,
+        method: Type[Trainer],
+        arguments: Type[TrainingArguments],
+    ) -> None:
+        assert isinstance(method, type) and issubclass(method, Trainer)
+        assert issubclass(type(self._model), (PreTrainedModel, PeftModel))
+        assert issubclass(type(self._peft_config), PeftConfig)
         assert isinstance(self._dataset, DatasetInterface)
+        assert issubclass(type(arguments), TrainingArguments)
 
         trainer: Trainer = method(
             model=self._model,
             train_dataset=self._dataset.train,
             eval_dataset=self._dataset.test,
             peft_config=self._peft_config,
-            max_seq_lenght=512,
             tokenizer=self._dataset.tokenizer,
             args=arguments,
         )
