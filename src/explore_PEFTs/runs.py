@@ -1,6 +1,7 @@
 # Standard Library dependencies
 import os
-from pathlib import Path
+
+# from pathlib import Path
 
 # ML dependencies
 import torch
@@ -21,16 +22,112 @@ from src.utils.extra import clean_string, locate_data_path
 # Global Variables
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
+# # Define PEFT methods with their corresponding configuration classes and parameters
+# PEFT_METHODS: list[dict] = [
+#     {
+#         "name": "LoRA",
+#         "config_class": LoraConfig,
+#         "params": {
+#             "r": 16,
+#             "lora_alpha": 16,
+#             "lora_dropout": 0.05,
+#             "bias": "none",
+#             "task_type": "CAUSAL_LM",
+#             "target_modules": [
+#                 "k_proj",
+#                 "q_proj",
+#                 "v_proj",
+#                 "o_proj",
+#                 "gate_proj",
+#                 "down_proj",
+#                 "up_proj",
+#             ],
+#         },
+#     },
+#     {
+#         "name": "LoHa",
+#         "config_class": LoHaConfig,
+#         "params": {
+#             "r": 16,
+#             "alpha": 16,
+#             "rank_dropout": 0.05,
+#             "target_modules": [
+#                 "k_proj",
+#                 "q_proj",
+#                 "v_proj",
+#                 "o_proj",
+#                 "gate_proj",
+#                 "down_proj",
+#                 "up_proj",
+#             ],
+#         },
+#     },
+#     {
+#         "name": "LoKr",
+#         "config_class": LoKrConfig,
+#         "params": {
+#             "r": 16,
+#             "alpha": 16,
+#             "rank_dropout": 0.05,
+#             "target_modules": [
+#                 "k_proj",
+#                 "q_proj",
+#                 "v_proj",
+#                 "o_proj",
+#                 "gate_proj",
+#                 "down_proj",
+#                 "up_proj",
+#             ],
+#         },
+#     },
+#     {
+#         "name": "AdaLoRA",
+#         "config_class": AdaLoraConfig,
+#         "params": {
+#             "init_r": 12,
+#             "r": 16,
+#             "beta1": 0.85,
+#             "beta2": 0.85,
+#             "tinit": 200,
+#             "tfinal": 1000,
+#             "deltaT": 10,
+#         },
+#     },
+#     {
+#         "name": "X-LoRA",
+#         "config_class": XLoraConfig,
+#         "params": {
+#             "r": 16,
+#             "xlora_dropout": 0.05,
+#         },
+#     },
+#     {
+#         "name": "IA3",
+#         "config_class": IA3Config,
+#         "params": {
+#             "target_modules": [
+#                 "k_proj",
+#                 "q_proj",
+#                 "v_proj",
+#                 "o_proj",
+#                 "gate_proj",
+#                 "down_proj",
+#                 "up_proj",
+#             ],
+#         },
+#     },
+# ]
+
 # Define PEFT methods with their corresponding configuration classes and parameters
 PEFT_METHODS: list[dict] = [
     {
         "name": "LoRA",
         "config_class": LoraConfig,
         "params": {
-            "r": 16,
-            "lora_alpha": 16,
-            "lora_dropout": 0.05,
-            "bias": "none",
+            "r": 8,  # Reduced for lower computational cost, maintaining good adaptation capability
+            "lora_alpha": 32,  # Increased to improve training stability
+            "lora_dropout": 0.1,  # Dropout slightly increased to prevent overfitting
+            "bias": "lora_only",  # Only the bias of the LoRA layers is updated
             "task_type": "CAUSAL_LM",
             "target_modules": [
                 "k_proj",
@@ -47,9 +144,10 @@ PEFT_METHODS: list[dict] = [
         "name": "LoHa",
         "config_class": LoHaConfig,
         "params": {
-            "r": 16,
-            "alpha": 16,
-            "rank_dropout": 0.05,
+            "r": 8,  # Reduced for better efficiency
+            "alpha": 32,  # Increased to provide better adjustment capability
+            "rank_dropout": 0.1,  # Dropout increased to reduce the risk of overfitting
+            "module_dropout": 0.05,  # Added to prevent all LoHa layers from always being active
             "target_modules": [
                 "k_proj",
                 "q_proj",
@@ -65,9 +163,12 @@ PEFT_METHODS: list[dict] = [
         "name": "LoKr",
         "config_class": LoKrConfig,
         "params": {
-            "r": 16,
-            "alpha": 16,
-            "rank_dropout": 0.05,
+            "r": 8,
+            "alpha": 32,
+            "rank_dropout": 0.1,
+            "module_dropout": 0.05,  # Added to improve robustness
+            "decompose_both": True,  # Enabled for a more effective decomposition
+            "decompose_factor": 4,  # Factor for Kronecker product decomposition
             "target_modules": [
                 "k_proj",
                 "q_proj",
@@ -83,21 +184,21 @@ PEFT_METHODS: list[dict] = [
         "name": "AdaLoRA",
         "config_class": AdaLoraConfig,
         "params": {
-            "init_r": 12,
-            "r": 16,
-            "beta1": 0.85,
-            "beta2": 0.85,
-            "tinit": 200,
-            "tfinal": 1000,
-            "deltaT": 10,
+            "init_r": 8,  # Reduced to lower initial computational cost
+            "r": 12,  # Increased progressively to improve adaptation capability
+            "beta1": 0.9,  # Standard adjustment to stabilize convergence
+            "beta2": 0.95,  # Adjusted to provide better training smoothness
+            "tinit": 100,  # Reduced to start adaptation sooner
+            "tfinal": 1200,  # Increased for greater adaptation towards the end of training
+            "deltaT": 20,  # Longer interval for less frequent adjustments
         },
     },
     {
         "name": "X-LoRA",
         "config_class": XLoraConfig,
         "params": {
-            "r": 16,
-            "xlora_dropout": 0.05,
+            "r": 8,  # Reduced to lower computational cost
+            "xlora_dropout": 0.1,  # Increased to prevent overfitting
         },
     },
     {
@@ -113,6 +214,7 @@ PEFT_METHODS: list[dict] = [
                 "down_proj",
                 "up_proj",
             ],
+            "feedforward_modules": "down_proj",  # Added to explicitly handle feedforward modules
         },
     },
 ]
@@ -209,4 +311,3 @@ def run20241122A() -> None:
 
 if __name__ == "__main__":
     run20241122A()
-
