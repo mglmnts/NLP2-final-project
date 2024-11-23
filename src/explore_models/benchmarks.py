@@ -1,4 +1,5 @@
 # Standard Library dependencies
+import gc
 import os
 import json
 
@@ -25,8 +26,8 @@ from src.ifeval.evaluation_main import main as ifeval_main
 MODELS: list[dict[str, str]] = [
     {"name": "mistralai/Mistral-7B-v0.3"},
     {"name": "meta-llama/Llama-3.1-8B"},
-    {"name": "Qwen/Qwen2.5-7B"},
-    {"name": "ibm-granite/granite-3.0-8b-base"},
+    # {"name": "Qwen/Qwen2.5-7B"},
+    # {"name": "ibm-granite/granite-3.0-8b-base"},
 ]
 
 
@@ -69,6 +70,12 @@ def execute_performance_benchmark() -> None:
             # display results
             print(results)
             print()
+            model_interface.cleanup_model()
+            del model
+            del tokenizer
+            del model_interface
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def execute_ifeval_response() -> None:
@@ -121,6 +128,7 @@ def execute_ifeval_response() -> None:
                     # Generate output
                     outputs = model.generate(
                         inputs,
+                        attention_mask=inputs["attention_mask"],
                         max_length=256,
                         eos_token_id=tokenizer.eos_token_id,
                     )
@@ -140,21 +148,27 @@ def execute_ifeval_response() -> None:
                     # Write the JSON object to file
                     f_out.write(json.dumps(json_obj) + "\n")
 
+            # Cleanup
             model_interface.cleanup_model()
+            del model
+            del tokenizer
+            del model_interface
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def execute_ifeval_evaluation() -> None:
-    input_file = locate_data_path("ifeval", "input_data.jsonl")
+    input_file = locate_data_path("ifeval") + "/input_data.jsonl"
     ifeval_folder = locate_data_path("explore-models", "ifeval")
     for model in MODELS:
         model_name = model["name"]
-        responses_data = ifeval_folder + f"/{model_name}_responses.jsonl"
-        output_dir = ifeval_folder + f"/{model_name}_results.jsonl"
+        responses_data = ifeval_folder + f"/{clean_string(model_name)}_responses.jsonl"
+        output_dir = ifeval_folder + f"/{clean_string(model_name)}_results"
         ifeval_main(input_file, responses_data, output_dir)
 
 
 if __name__ == "__main__":
 
     # execute_performance_benchmark()
-    execute_ifeval_response()
+    # execute_ifeval_response()
     execute_ifeval_evaluation()

@@ -604,6 +604,9 @@ class ModelInterface:
         # Load the LoRA adapter weights
         model = PeftModel.from_pretrained(model, checkpoint_path)
 
+        # to device
+        model = model.to(device)
+
         # Assign model and tokenizer to the instance
         instance._model = model
         instance._name = base_model_name

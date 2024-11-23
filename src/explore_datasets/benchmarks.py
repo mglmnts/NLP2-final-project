@@ -1,4 +1,5 @@
 # Standard Library dependencies
+import gc
 import os
 import json
 
@@ -69,7 +70,12 @@ def execute_performance_benchmark() -> None:
             # display results
             print(results)
             print()
-        model_interface.cleanup_model()
+            model_interface.cleanup_model()
+            del model
+            del tokenizer
+            del model_interface
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def execute_ifeval_response() -> None:
@@ -121,6 +127,7 @@ def execute_ifeval_response() -> None:
                     # Generate output
                     outputs = model.generate(
                         inputs,
+                        attention_mask=inputs["attention_mask"],
                         max_length=256,
                         eos_token_id=tokenizer.eos_token_id,
                     )
@@ -141,15 +148,20 @@ def execute_ifeval_response() -> None:
                     f_out.write(json.dumps(json_obj) + "\n")
 
             model_interface.cleanup_model()
+            del model
+            del tokenizer
+            del model_interface
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def execute_ifeval_evaluation() -> None:
-    input_file = locate_data_path("ifeval", "input_data.jsonl")
+    input_file = locate_data_path("ifeval") + "/input_data.jsonl"
     ifeval_folder = locate_data_path("explore-datasets", "ifeval")
     for model in MODELS:
         model_name = model["name"]
-        responses_data = ifeval_folder + f"/{model_name}_responses.jsonl"
-        output_dir = ifeval_folder + f"/{model_name}_results.jsonl"
+        responses_data = ifeval_folder + f"/{clean_string(model_name)}_responses.jsonl"
+        output_dir = ifeval_folder + f"/{clean_string(model_name)}_results"
         ifeval_main(input_file, responses_data, output_dir)
 
 
