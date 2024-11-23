@@ -13,6 +13,10 @@ from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import clean_string, locate_data_path
 
+from datasets import load_dataset
+import json
+from tqdm import tqdm
+
 
 MODELS: list[dict[str, str]] = [
     {"name": "meta-llama/Llama-3.1-8B"},
@@ -24,14 +28,12 @@ MODELS: list[dict[str, str]] = [
 
 def execute_performance_benchmark() -> None:
     DATASET_NAME: str = "GAIR/lima"
-    checkpoint_dirs: list[str] = [clean_string(model["name"]) for model in MODELS]
+    for model in MODELS:
+        CHECKPOINTS_PATH: str = locate_data_path("explore-models", clean_string(model["name"]))
+        for dir_name in os.listdir(CHECKPOINTS_PATH):
+            if dir_name.startswith("checkpoint-"):
+                checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
 
-    for dir_name in checkpoint_dirs:
-        data_path: str = locate_data_path(section="explore-models", dir_name=dir_name)
-
-        for file in os.listdir(data_path):
-            if ".pt" in file:
-                checkpoint_path: str = file
 
         model_interface: ModelInterface
         model_interface = ModelInterface.from_checkpoint(
@@ -50,6 +52,7 @@ def execute_performance_benchmark() -> None:
         results: dict = benchmark.run_benchmark()
 
         # save benchmark results
+        data_path: str = locate_data_path("explore-models", "benchmarks")
         os.makedirs(data_path, exist_ok=True)
         json_path: str = os.path.join(dir_name, "benchmark_results.json")
         with open(json_path, "w") as json_file:
@@ -59,16 +62,65 @@ def execute_performance_benchmark() -> None:
         print(results)
         print()
 
-        return None
-
 
 def execute_ifeval_benchmark() -> None:
+    DATASET_NAME: str = "GAIR/lima"
+    for model in MODELS:
+        CHECKPOINTS_PATH: str = locate_data_path("explore-models", clean_string(model["name"]))
+        for dir_name in os.listdir(CHECKPOINTS_PATH):
+            if dir_name.startswith("checkpoint-"):
+                checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
 
-    pass
+        model_interface: ModelInterface
+        model_interface = ModelInterface.from_checkpoint(
+            checkpoint_path=checkpoint_path
+        )
+        model: str = model_interface.model
+        model_name: str = model_interface.name
+        dataset_interface: DatasetInterface
+        dataset_interface = DatasetInterface(
+            dataset_name=DATASET_NAME, model_name=model_name
+        )
+        tokenizer: Dataset = dataset_interface.tokenizer
+        dataset_test: Dataset = dataset_interface.test
+        # Step 2: Load the google/IFEval dataset
+        dataset = load_dataset("google/IFEval")
+        # Step 3: Generate predictions on the dataset
+        output_file = "model_responses.jsonl"
+        with open(output_file, 'w', encoding='utf-8') as f_out:
+            for sample in tqdm(dataset['train']):   # Use 'validation' or 'train' split if 'test' is not available
+                input_text = sample['prompt']  # Adjust the field name based on the dataset's structure
 
-    return None
+                # Prepare the input prompt
+                prompt = input_text
+
+                # Tokenize input
+                inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+
+                # Generate output
+                outputs = model.generate(
+                    inputs,
+                    max_length=256,
+                    eos_token_id=tokenizer.eos_token_id,
+                )
+
+                # Decode output
+                generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+                # Since the model may include the prompt in its output, we extract the generated response
+                response = generated_text[len(prompt):]
+
+                # Prepare the JSON object
+                json_obj = {
+                    "prompt": prompt,
+                    "response": response
+                }
+
+                # Write the JSON object to file
+                f_out.write(json.dumps(json_obj) + '\n')
 
 
 if __name__ == "__main__":
 
     execute_performance_benchmark()
+

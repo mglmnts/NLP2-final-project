@@ -48,10 +48,8 @@ PEFT_METHODS: list[dict] = [
         "config_class": LoHaConfig,
         "params": {
             "r": 16,
-            "lora_alpha": 16,
-            "lora_dropout": 0.05,
-            "init_method": "he_uniform",
-            "task_type": "CAUSAL_LM",
+            "alpha": 16,
+            "rank_dropout": 0.05,
             "target_modules": [
                 "k_proj",
                 "q_proj",
@@ -68,10 +66,8 @@ PEFT_METHODS: list[dict] = [
         "config_class": LoKrConfig,
         "params": {
             "r": 16,
-            "lora_alpha": 16,
-            "lora_dropout": 0.05,
-            "kr_module": "linear",
-            "task_type": "CAUSAL_LM",
+            "alpha": 16,
+            "rank_dropout": 0.05,
             "target_modules": [
                 "k_proj",
                 "q_proj",
@@ -93,19 +89,7 @@ PEFT_METHODS: list[dict] = [
             "beta2": 0.85,
             "tinit": 200,
             "tfinal": 1000,
-            "delta_t": 10,
-            "lora_alpha": 16,
-            "lora_dropout": 0.05,
-            "task_type": "CAUSAL_LM",
-            "target_modules": [
-                "k_proj",
-                "q_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "down_proj",
-                "up_proj",
-            ],
+            "deltaT": 10,
         },
     },
     {
@@ -113,28 +97,13 @@ PEFT_METHODS: list[dict] = [
         "config_class": XLoraConfig,
         "params": {
             "r": 16,
-            "lora_alpha": 16,
-            "lora_dropout": 0.05,
-            "scaling": "constant",
-            "task_type": "CAUSAL_LM",
-            "target_modules": [
-                "k_proj",
-                "q_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "down_proj",
-                "up_proj",
-            ],
+            "xlora_dropout": 0.05,
         },
     },
     {
         "name": "IA3",
         "config_class": IA3Config,
         "params": {
-            "ia3_lora_alpha": 16,
-            "ia3_dropout": 0.05,
-            "task_type": "CAUSAL_LM",
             "target_modules": [
                 "k_proj",
                 "q_proj",
@@ -240,3 +209,4 @@ def run20241122A() -> None:
 
 if __name__ == "__main__":
     run20241122A()
+

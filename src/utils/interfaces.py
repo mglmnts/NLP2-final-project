@@ -261,7 +261,9 @@ class ModelInterface:
             )
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
-            checkpoint_path, device_map=device, trust_remote_code=True
+            checkpoint_path, 
+            device_map="auto",
+            offload_folder="offload_dir",
         )
         instance._model = model
         instance._name = model.config.model_type
