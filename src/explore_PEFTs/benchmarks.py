@@ -38,7 +38,7 @@ def execute_performance_benchmark() -> None:
     for model in MODELS:
         torch.cuda.empty_cache()
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-models", clean_string(model["name"])
+            "explore-PEFTs", clean_string(model["name"])
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -58,7 +58,7 @@ def execute_performance_benchmark() -> None:
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
-            data_path: str = locate_data_path("explore-models", "benchmarks")
+            data_path: str = locate_data_path("explore-PEFTs", "benchmarks")
             os.makedirs(data_path, exist_ok=True)
             json_path: str = os.path.join(
                 dir_name, f"{clean_string(model_name)}_results.jsonl"
@@ -69,6 +69,7 @@ def execute_performance_benchmark() -> None:
             # display results
             print(results)
             print()
+        model_interface.cleanup_model()
 
 
 def execute_ifeval_response() -> None:
@@ -76,7 +77,7 @@ def execute_ifeval_response() -> None:
     for model in MODELS:
         torch.cuda.empty_cache()
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-models", clean_string(model["name"])
+            "explore-PEFTs", clean_string(model["name"])
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -85,7 +86,6 @@ def execute_ifeval_response() -> None:
 
         if checkpoint_path:
             # Step 0. Load model
-            torch.cuda.empty_cache()
             model_interface: ModelInterface
             model_interface = ModelInterface.from_checkpoint(
                 checkpoint_path=checkpoint_path
@@ -100,7 +100,7 @@ def execute_ifeval_response() -> None:
             dataset = get_dataset_subset(dataset["train"], prop=0.002, shuffle=False)
 
             # Step 3: Generate predictions on the dataset
-            output_file = locate_data_path("explore-models", "ifeval")
+            output_file = locate_data_path("explore-PEFTs", "ifeval")
             output_file = os.path.join(
                 output_file, f"{clean_string(model_name)}_responses.jsonl"
             )
@@ -145,7 +145,7 @@ def execute_ifeval_response() -> None:
 
 def execute_ifeval_evaluation() -> None:
     input_file = locate_data_path("ifeval", "input_data.jsonl")
-    ifeval_folder = locate_data_path("explore-models", "ifeval")
+    ifeval_folder = locate_data_path("explore-PEFTs", "ifeval")
     for model in MODELS:
         model_name = model["name"]
         responses_data = ifeval_folder + f"/{model_name}_responses.jsonl"

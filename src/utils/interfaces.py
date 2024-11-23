@@ -1,6 +1,8 @@
 # Standard Library dependencies
 import os
 import gc
+
+import shutil
 from typing import Optional, Type, Union
 
 # ML dependencies
@@ -447,21 +449,6 @@ class ModelInterface:
         trainer.train()
 
         return None
-
-    # def cleanup_model(self) -> None:
-    #     """
-    #     Cleans up the model from GPU memory.
-    #     """
-    #     if self._model is not None:
-    #         # Move the model to CPU
-    #         self._model.to("cpu")
-    #         # Delete the model object
-    #         del self._model
-    #         self._model = None
-    #         # Clear GPU cache
-    #         torch.cuda.empty_cache()
-    #         # Run garbage collection
-    #         gc.collect()
 
     # def cleanup_model(self) -> None:
     #     """
