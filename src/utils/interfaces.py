@@ -140,9 +140,22 @@ class DatasetInterface:
             if col in self._tokenized_dataset.column_names:
                 self._tokenized_dataset = self._tokenized_dataset.remove_columns(col)
 
+        # Ensure that a 'test' split exists
+        if not isinstance(self._tokenized_dataset, DatasetDict):
+            # If the dataset is not a DatasetDict, convert it to one with only 'train'
+            self._tokenized_dataset = DatasetDict({"train": self._tokenized_dataset})
+
+        if "test" not in self._tokenized_dataset:
+            # Split 20% of 'train' into 'test'
+            self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
+                test_size=0.2, seed=42
+            )
+            print("No 'test' split found. Split 20% of 'train' into 'test'.")
+
         # Ensure the format is PyTorch-friendly
         format_columns: list[str] = ["input_ids", "attention_mask"]
         self._tokenized_dataset.set_format(type="torch", columns=format_columns)
+
         return None
 
     def cleanup_dataset(self) -> None:

@@ -1,6 +1,6 @@
 # Standard Library dependencies
-import os
 import gc
+from pathlib import Path
 from typing import Type
 
 # ML dependencies
@@ -221,7 +221,7 @@ PEFT_METHODS: list[dict] = [
 ]
 
 
-def run20241122A() -> None:
+def run_experimet_A(experiment_name="A") -> None:
     """
     Iterates over different Parameter-Efficient Fine-Tuning (PEFT) methods to train a
     specified model. For each PEFT method, it configures the training environment,
@@ -250,7 +250,7 @@ def run20241122A() -> None:
 
         # Define unique directory for each PEFT method
         model_path: str = locate_data_path(
-            section="explore-PEFTs",
+            section=str(Path("explore-PEFTs") / experiment_name),
             dir_name=clean_string(f"{model_name}_{method_name}"),
         )
 
@@ -277,7 +277,7 @@ def run20241122A() -> None:
             warmup_steps=warmup_steps,
             lr_scheduler_type="linear",
             report_to="tensorboard",
-            logging_dir=os.path.join(model_path, "logs"),
+            logging_dir=(Path(model_path) / "logs"),
             max_seq_length=512,
         )
 
@@ -305,4 +305,4 @@ def run20241122A() -> None:
 
 
 if __name__ == "__main__":
-    run20241122A()
+    run_experimet_A()

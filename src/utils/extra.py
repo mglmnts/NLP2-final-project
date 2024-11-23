@@ -28,19 +28,19 @@ def load_model_tokenizer(model_name: str) -> PreTrainedTokenizerFast:
 def clean_string(string: str) -> str:
     """
     Converts the input string to lowercase and removes all characters
-    except for letters (a-z) and hyphens (-).
+    except for lowercase letters (a-z), digits (0-9), and hyphens (-).
 
     Args:
         string (str): The original string to be cleaned.
 
     Returns:
-        str: The cleaned string containing only lowercase letters and hyphens.
+        str: The cleaned string containing only lowercase letters, digits, and hyphens.
     """
     # Convert the string to lowercase
     lowered: str = string.lower()
 
-    # Use regex to remove characters that are not letters or hyphens
-    clean_str: str = re.sub(r"[^a-z\-]", "", lowered)
+    # Use regex to remove characters that are not lowercase letters, digits, or hyphens
+    clean_str: str = re.sub(r"[^a-z0-9\-]", "", lowered)
 
     return clean_str
 

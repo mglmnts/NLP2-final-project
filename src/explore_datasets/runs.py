@@ -1,6 +1,6 @@
 # Standard Library dependencies
-import os
 import gc
+from pathlib import Path
 
 # ML dependencies
 import torch
@@ -19,20 +19,20 @@ model_name: str = "mistralai/Mistral-7B-v0.3"
 
 # Lista de datasets
 DATASETS: list[dict[str, str]] = [
-    {"name": "GAIR/lima"},
+    # {"name": "GAIR/lima"},
     {"name": "databricks/databricks-dolly-15k"},
     {"name": "tatsu-lab/alpaca"},
     {"name": "argilla/ifeval-like-data"},
 ]
 
 
-def run_experiment() -> None:
+def run_experiment_A(experiment_name="A") -> None:
     for info in DATASETS:
         dataset_name: str = info["name"]
         # Directorio de salida específico para cada dataset
         model_path: str = locate_data_path(
-            section="explore-datasets",
-            dir_name=clean_string(f"{model_name}_{dataset_name}"),
+            section=str(Path("explore-datasets") / experiment_name),
+            dir_name=clean_string(f"{model_name}-{dataset_name}"),
         )
         eval_steps: int = 10
         save_steps: int = 45
@@ -57,7 +57,7 @@ def run_experiment() -> None:
             warmup_steps=warmup_steps,
             lr_scheduler_type="linear",
             report_to="tensorboard",
-            logging_dir=os.path.join(model_path, "logs"),
+            logging_dir=(Path(model_path) / "logs"),
             max_seq_length=512,
         )
 
@@ -74,7 +74,6 @@ def run_experiment() -> None:
             ],
             feedforward_modules=None,  # specify feedforward modules
             fan_in_fan_out=False,
-            bias="none",
             task_type="CAUSAL_LM",
         )
 
@@ -101,4 +100,4 @@ def run_experiment() -> None:
 
 
 if __name__ == "__main__":
-    run_experiment()
+    run_experiment_A()

@@ -1,5 +1,4 @@
 # Starndard Library dependencies
-import os
 import gc
 from pathlib import Path
 from typing import Callable
@@ -24,7 +23,7 @@ MODELS: list[dict[str, str]] = [
 ]
 
 
-def run20241122A() -> None:
+def run_experiment_A(experiment_name="A") -> None:
 
     dataset_name: str = "GAIR/lima"
     dataset_interface: DatasetInterface = DatasetInterface(dataset_name=dataset_name)
@@ -33,7 +32,8 @@ def run20241122A() -> None:
 
         model_name: str = info["name"]
         model_path: str = locate_data_path(
-            section="explore-models", dir_name=clean_string(model_name)
+            section=(Path("explore-models") / experiment_name),
+            dir_name=clean_string(model_name)
         )
         eval_steps: int = 10
         save_steps: int = 45
@@ -58,7 +58,7 @@ def run20241122A() -> None:
             warmup_steps=warmup_steps,
             lr_scheduler_type="linear",
             report_to="tensorboard",
-            logging_dir=os.path.join(model_path, "logs"),
+            logging_dir=(Path(model_path), "logs"),
             max_seq_length=512,
         )
 
@@ -98,4 +98,4 @@ def run20241122A() -> None:
 
 
 if __name__ == "__main__":
-    run20241122A()
+    run_experiment_A()
