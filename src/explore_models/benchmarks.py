@@ -79,13 +79,15 @@ def execute_ifeval_benchmark() -> None:
                 checkpoint_path=checkpoint_path
             )
             model: str = model_interface.model
-            model_name: str = model_interface.model
+            model_name: str = model_interface.name
+
             # Step 1: Load tokenizer
             tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
             # Step 3: Generate predictions on the dataset
-            output_file = "model_responses.jsonl"
+            output_file = locate_data_path("explore-models", "ifeval")
+            output_file = os.path.join(output_file, "model_responses.jsonl")
             with open(output_file, "w", encoding="utf-8") as f_out:
                 for sample in tqdm(
                     dataset["train"]
