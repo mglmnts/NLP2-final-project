@@ -4,19 +4,18 @@ import json
 
 # ML dependencies
 import torch
-from datasets import Dataset
+from datasets import Dataset, load_dataset
 from peft import PeftModel
 from transformers import AutoModelForCausalLM
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
+# Other dependencies
+from tqdm import tqdm
+
 # Internal dependencies:
 from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
-from src.utils.extra import clean_string, locate_data_path
-
-from datasets import load_dataset
-import json
-from tqdm import tqdm
+from src.utils.extra import load_model_tokenizer, clean_string, locate_data_path
 
 
 MODELS: list[dict[str, str]] = [
@@ -59,7 +58,7 @@ def execute_performance_benchmark() -> None:
         # save benchmark results
         data_path: str = locate_data_path("explore-models", "benchmarks")
         os.makedirs(data_path, exist_ok=True)
-        json_path: str = os.path.join(dir_name, "benchmark_results.json")
+        json_path: str = os.path.join(dir_name, "benchmark_results.jsonl")
         with open(json_path, "w") as json_file:
             json.dump(results, json_file, indent=4)
 
@@ -69,7 +68,7 @@ def execute_performance_benchmark() -> None:
 
 
 def execute_ifeval_benchmark() -> None:
-    DATASET_NAME: str = "GAIR/lima"
+    DATASET_NAME: str = "google/IFEval"
     for model in MODELS:
         CHECKPOINTS_PATH: str = locate_data_path(
             "explore-models", clean_string(model["name"])
@@ -78,20 +77,17 @@ def execute_ifeval_benchmark() -> None:
             if dir_name.startswith("checkpoint-"):
                 checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
 
+        # Step 0. Load model
         model_interface: ModelInterface
         model_interface = ModelInterface.from_checkpoint(
             checkpoint_path=checkpoint_path
         )
         model: str = model_interface.model
-        model_name: str = model_interface.name
-        dataset_interface: DatasetInterface
-        dataset_interface = DatasetInterface(
-            dataset_name=DATASET_NAME, model_name=model_name
-        )
+        model_name: str = model_interface.model
         # Step 1: Load tokenizer
-        tokenizer: Dataset = dataset_interface.tokenizer
+        tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
         # Step 2: Load the google/IFEval dataset
-        dataset: Dataset = load_dataset("google/IFEval")
+        dataset: Dataset = load_dataset(path=DATASET_NAME)
         # Step 3: Generate predictions on the dataset
         output_file = "model_responses.jsonl"
         with open(output_file, "w", encoding="utf-8") as f_out:
@@ -132,3 +128,4 @@ def execute_ifeval_benchmark() -> None:
 if __name__ == "__main__":
 
     execute_performance_benchmark()
+    # execute_ifeval_benchmark()

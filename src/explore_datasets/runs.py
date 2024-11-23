@@ -1,21 +1,20 @@
-# Dependencias de la biblioteca estándar
+# Standard Library dependencies
 import os
-from pathlib import Path
-from typing import Callable
+import gc
 
-# Dependencias de ML
+# ML dependencies
 import torch
-from peft import IA3Config  # Importamos IA3Config en lugar de LoraConfig
+from peft import IA3Config
 from trl import SFTTrainer, SFTConfig
 
-# Dependencias internas
+# Internal dependencies
 from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.extra import clean_string, locate_data_path
 
-# Variables globales
+# Global variables
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Modelo a utilizar
+# Model to use for dataset benchmarking
 model_name: str = "mistralai/Mistral-7B-v0.3"
 
 # Lista de datasets
@@ -43,7 +42,7 @@ def run_experiment() -> None:
         # Configuración de entrenamiento
         training_arguments: SFTConfig = SFTConfig(
             output_dir=model_path,
-            eval_strategy="steps",  # Activamos la evaluación cada cierto número de pasos
+            eval_strategy="steps",  # Activate evaluation each "save_steps"
             do_eval=True,
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
@@ -62,7 +61,7 @@ def run_experiment() -> None:
             max_seq_length=512,
         )
 
-        # Configuración de IA3 para ajuste fino eficiente
+        # IA3 config
         peft_config = IA3Config(
             target_modules=[
                 "k_proj",
@@ -73,7 +72,7 @@ def run_experiment() -> None:
                 "down_proj",
                 "up_proj",
             ],
-            feedforward_modules=None,  # Puedes especificar módulos de feedforward si aplica
+            feedforward_modules=None,  # specify feedforward modules
             fan_in_fan_out=False,
             bias="none",
             task_type="CAUSAL_LM",
@@ -87,7 +86,7 @@ def run_experiment() -> None:
         model_interface.load_PEFT_config(config=peft_config)
         model_interface.load_dataset(interface=dataset_interface)
 
-        print(f"Entrenando en el dataset: {dataset_name}")
+        print(f"\n\n\nTraining with Dataset: {dataset_name}\n")
         model_interface.train(
             method=SFTTrainer,
             arguments=training_arguments,
@@ -96,7 +95,9 @@ def run_experiment() -> None:
         # Limpieza
         model_interface.cleanup_model()
         dataset_interface.cleanup_dataset()
-        torch.cuda.empty_cache()
+        del model_interface
+        del dataset_interface
+        gc.collect()
 
 
 if __name__ == "__main__":

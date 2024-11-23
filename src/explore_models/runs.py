@@ -1,5 +1,6 @@
 # Starndard Library dependencies
 import os
+import gc
 from pathlib import Path
 from typing import Callable
 
@@ -25,6 +26,9 @@ MODELS: list[dict[str, str]] = [
 
 def run20241122A() -> None:
 
+    dataset_name: str = "GAIR/lima"
+    dataset_interface: DatasetInterface = DatasetInterface(dataset_name=dataset_name)
+
     for info in MODELS:
 
         model_name: str = info["name"]
@@ -35,7 +39,6 @@ def run20241122A() -> None:
         save_steps: int = 45
         warmup_steps: int = 25
         max_steps: int = 100
-        dataset_name: str = "GAIR/lima"
 
         # Train config
         training_arguments: SFTConfig = SFTConfig(
@@ -77,23 +80,21 @@ def run20241122A() -> None:
             ],
         )
 
-        dataset_interface: DatasetInterface = DatasetInterface(
-            dataset_name=dataset_name, model_name=model_name
-        )
+        dataset_interface.set_model(model_name=model_name)
+        gc.collect()
         model_interface: ModelInterface = ModelInterface()
         model_interface.load_model(name=model_name)
         model_interface.load_PEFT_config(config=peft_config)
         model_interface.load_dataset(interface=dataset_interface)
 
-        print(f"Training: {model_name}")
+        print(f"\n\n\nTraining: {model_name}\n")
         model_interface.train(
             method=SFTTrainer,
             arguments=training_arguments,  # , method_config=sft_config
         )
         model_interface.cleanup_model()
-        dataset_interface.cleanup_dataset()
-        torch.cuda.empty_cache()
-        # input()
+        del model_interface
+        gc.collect()
 
 
 if __name__ == "__main__":

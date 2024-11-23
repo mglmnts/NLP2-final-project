@@ -1,7 +1,7 @@
 # Standard Library dependencies
 import os
-
-# from pathlib import Path
+import gc
+from typing import Type
 
 # ML dependencies
 import torch
@@ -13,6 +13,7 @@ from peft import (
     XLoraConfig,
     IA3Config,
 )
+from transformers import TrainingArguments
 from trl import SFTTrainer, SFTConfig
 
 # Internal dependencies
@@ -240,6 +241,7 @@ def run20241122A() -> None:
     """
     model_name: str = "mistralai/Mistral-7B-v0.3"
     dataset_name: str = "GAIR/lima"
+    dataset_interface: DatasetInterface = DatasetInterface(dataset_name=dataset_name)
 
     for method_info in PEFT_METHODS:
         method_name: str = method_info["name"]
@@ -281,32 +283,25 @@ def run20241122A() -> None:
 
         # Initialize PEFT configuration using unpacked parameters
         try:
-            peft_config = config_class(**config_params)
+            peft_config: Type[TrainingArguments] = config_class(**config_params)
         except TypeError as e:
             raise ValueError(f"Error initializing {method_name} configuration: {e}")
 
-        # Initialize dataset and model interfaces
-        dataset_interface: DatasetInterface = DatasetInterface(
-            dataset_name=dataset_name, model_name=model_name
-        )
+        dataset_interface.set_model(model_name=model_name)
+        gc.collect()
         model_interface: ModelInterface = ModelInterface()
         model_interface.load_model(name=model_name)
         model_interface.load_PEFT_config(config=peft_config)
         model_interface.load_dataset(interface=dataset_interface)
 
         print(f"Training with PEFT method: {method_name} on model: {model_name}")
-
-        # Start training
         model_interface.train(
             method=SFTTrainer,
-            arguments=training_arguments,
+            arguments=training_arguments,  # , method_config=sft_config
         )
-
-        # Cleanup resources
         model_interface.cleanup_model()
-        # dataset_interface.cleanup_dataset()
-        torch.cuda.empty_cache()
-        print(f"Completed training with PEFT method: {method_name}\n")
+        del model_interface
+        gc.collect()
 
 
 if __name__ == "__main__":

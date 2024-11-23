@@ -2,6 +2,27 @@
 import os
 import regex as re
 from pathlib import Path
+from typing import Union
+
+# ML dependencies
+from transformers import AutoTokenizer
+from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
+
+
+def load_model_tokenizer(model_name: str) -> PreTrainedTokenizerFast:
+    # Load the specific tokenizer for the specified model
+    tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast]
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name,
+        add_eos_token=True,  # Add end-of-sequence token to the tokenizer
+        use_fast=True,  # Use the fast tokenizer implementation
+        padding_side="left",  # Pad sequences on the left side
+    )
+    assert isinstance(tokenizer, PreTrainedTokenizerFast)
+    tokenizer.pad_token = tokenizer.eos_token  # Set padding token to EOS token
+
+    return tokenizer
 
 
 def clean_string(string: str) -> str:
