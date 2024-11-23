@@ -153,4 +153,3 @@ Los modelos y datasets de Hugging Face pueden ocupar hasta **15 GB** en disco. E
 ```bash
 huggingface-cli delete-cache
 ```
-```
