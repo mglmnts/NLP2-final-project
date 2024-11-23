@@ -23,7 +23,7 @@ DATASETS: list[dict[str, str]] = [
     {"name": "GAIR/lima"},
     {"name": "databricks/databricks-dolly-15k"},
     {"name": "tatsu-lab/alpaca"},
-    {"name": "google/IFEval"},
+    {"name": "argilla/ifeval-like-data"},
 ]
 
 

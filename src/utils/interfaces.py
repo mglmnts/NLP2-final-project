@@ -53,10 +53,27 @@ class DatasetInterface:
         self._tokenized_dataset = self._dataset.map(
             function=self._format_conversation, batched=True
         )
-        # remove any columns not needed for training (e.g., original text fields)
-        rm_columns: list[str] = ["conversations", "source"]
-        self._tokenized_dataset = self._tokenized_dataset.remove_columns(rm_columns)
-        # ensure the format is PyTorch-friendly
+
+        # # remove any columns not needed for training (e.g., original text fields)
+        # rm_columns: list[str] = ["conversations", "source"]
+        # self._tokenized_dataset = self._tokenized_dataset.remove_columns(rm_columns)
+        # # ensure the format is PyTorch-friendly
+        # format_columns: list[str] = ["input_ids", "attention_mask"]
+        # self._tokenized_dataset.set_format(type="torch", columns=format_columns)
+
+        # Remove any columns not needed for training (e.g., original text fields)
+        rm_columns: list[str] = [
+            "conversations",
+            "source",
+            "instruction",
+            "response",
+            "output",
+        ]
+        for col in rm_columns:
+            if col in self._tokenized_dataset.column_names:
+                self._tokenized_dataset = self._tokenized_dataset.remove_columns(col)
+
+        # Ensure the format is PyTorch-friendly
         format_columns: list[str] = ["input_ids", "attention_mask"]
         self._tokenized_dataset.set_format(type="torch", columns=format_columns)
 
@@ -112,10 +129,25 @@ class DatasetInterface:
                 " ".join(conv) if isinstance(conv, list) else conv
                 for conv in examples["conversations"]
             ]
-        if all(substr in self._dataset_name.lower() for substr in ["alpaca"]):
+        if all(substr in self._dataset_name.lower() for substr in ["dolly"]):
+
             joined_conversations = [
-                " ".join(conv) if isinstance(conv, list) else conv
-                for conv in examples["conversations"]
+                f"{pair[0]} {pair[1]}"
+                for pair in zip(examples["instruction"], examples["response"])
+            ]
+
+        if all(substr in self._dataset_name.lower() for substr in ["alpaca"]):
+
+            joined_conversations = [
+                f"{pair[0]} {pair[1]}"
+                for pair in zip(examples["instruction"], examples["output"])
+            ]
+
+        if all(substr in self._dataset_name.lower() for substr in ["ifeval", "like"]):
+
+            joined_conversations = [
+                f"{pair[0]} {pair[1]}"
+                for pair in zip(examples["instruction"], examples["response"])
             ]
 
         # Tokenize the joined conversations
@@ -261,7 +293,7 @@ class ModelInterface:
             )
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = AutoModelForCausalLM.from_pretrained(
-            checkpoint_path, 
+            checkpoint_path,
             device_map="auto",
             offload_folder="offload_dir",
         )

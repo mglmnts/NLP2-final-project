@@ -3,6 +3,7 @@ import os
 import json
 
 # ML dependencies
+import torch
 from datasets import Dataset
 from peft import PeftModel
 from transformers import AutoModelForCausalLM
@@ -26,14 +27,18 @@ MODELS: list[dict[str, str]] = [
 ]
 
 
+device: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+
 def execute_performance_benchmark() -> None:
     DATASET_NAME: str = "GAIR/lima"
     for model in MODELS:
-        CHECKPOINTS_PATH: str = locate_data_path("explore-models", clean_string(model["name"]))
+        CHECKPOINTS_PATH: str = locate_data_path(
+            "explore-models", clean_string(model["name"])
+        )
         for dir_name in os.listdir(CHECKPOINTS_PATH):
             if dir_name.startswith("checkpoint-"):
                 checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
-
 
         model_interface: ModelInterface
         model_interface = ModelInterface.from_checkpoint(
@@ -66,7 +71,9 @@ def execute_performance_benchmark() -> None:
 def execute_ifeval_benchmark() -> None:
     DATASET_NAME: str = "GAIR/lima"
     for model in MODELS:
-        CHECKPOINTS_PATH: str = locate_data_path("explore-models", clean_string(model["name"]))
+        CHECKPOINTS_PATH: str = locate_data_path(
+            "explore-models", clean_string(model["name"])
+        )
         for dir_name in os.listdir(CHECKPOINTS_PATH):
             if dir_name.startswith("checkpoint-"):
                 checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
@@ -81,18 +88,22 @@ def execute_ifeval_benchmark() -> None:
         dataset_interface = DatasetInterface(
             dataset_name=DATASET_NAME, model_name=model_name
         )
+        # Step 1: Load tokenizer
         tokenizer: Dataset = dataset_interface.tokenizer
-        dataset_test: Dataset = dataset_interface.test
         # Step 2: Load the google/IFEval dataset
-        dataset = load_dataset("google/IFEval")
+        dataset: Dataset = load_dataset("google/IFEval")
         # Step 3: Generate predictions on the dataset
         output_file = "model_responses.jsonl"
-        with open(output_file, 'w', encoding='utf-8') as f_out:
-            for sample in tqdm(dataset['train']):   # Use 'validation' or 'train' split if 'test' is not available
-                input_text = sample['prompt']  # Adjust the field name based on the dataset's structure
+        with open(output_file, "w", encoding="utf-8") as f_out:
+            for sample in tqdm(
+                dataset["train"]
+            ):  # Use 'validation' or 'train' split if 'test' is not available
+                input_text = sample[
+                    "prompt"
+                ]  # Adjust the field name based on the dataset's structure
 
                 # Prepare the input prompt
-                prompt = input_text
+                prompt: str = input_text
 
                 # Tokenize input
                 inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
@@ -107,20 +118,17 @@ def execute_ifeval_benchmark() -> None:
                 # Decode output
                 generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-                # Since the model may include the prompt in its output, we extract the generated response
-                response = generated_text[len(prompt):]
+                # Since the model may include the prompt in its output, we extract the
+                # generated response
+                response = generated_text[len(prompt) :]
 
                 # Prepare the JSON object
-                json_obj = {
-                    "prompt": prompt,
-                    "response": response
-                }
+                json_obj = {"prompt": prompt, "response": response}
 
                 # Write the JSON object to file
-                f_out.write(json.dumps(json_obj) + '\n')
+                f_out.write(json.dumps(json_obj) + "\n")
 
 
 if __name__ == "__main__":
 
     execute_performance_benchmark()
-
