@@ -5,9 +5,6 @@ import json
 # ML dependencies
 import torch
 from datasets import Dataset, load_dataset
-from peft import PeftModel
-from transformers import AutoModelForCausalLM
-from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 # Other dependencies
 from tqdm import tqdm
