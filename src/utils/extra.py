@@ -83,3 +83,33 @@ def locate_data_path(section: str, dir_name: str) -> str:
     dir_path: str = os.path.join(src_path.parent, rel_path)
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path
+
+
+from datasets import Dataset
+
+
+def get_dataset_subset(dataset: Dataset, prop: float, shuffle: bool = True) -> Dataset:
+    """
+    Returns a random subset of the IFEval dataset.
+
+    Args:
+        dataset (Dataset): The original IFEval dataset.
+        prop (float): The proportion of the dataset to include in the subset (between 0 and 1].
+        shuffle (bool, optional): Whether to shuffle the dataset before sampling. Defaults to True.
+
+    Returns:
+        Dataset: A subset of the IFEval dataset containing the specified proportion of data.
+    """
+    assert 0 < prop <= 1, "Proportion must be between 0 and 1."
+
+    # Optionally shuffle the dataset
+    if shuffle:
+        dataset = dataset.shuffle(seed=42)
+
+    # Calculate the number of samples to select
+    num_samples = int(len(dataset) * prop)
+
+    # Select the subset
+    subset = dataset.select(range(num_samples))
+
+    return subset

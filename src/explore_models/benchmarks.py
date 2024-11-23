@@ -12,7 +12,12 @@ from tqdm import tqdm
 # Internal dependencies:
 from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
-from src.utils.extra import load_model_tokenizer, clean_string, locate_data_path
+from src.utils.extra import (
+    load_model_tokenizer,
+    clean_string,
+    locate_data_path,
+    get_dataset_subset,
+)
 
 
 MODELS: list[dict[str, str]] = [
@@ -85,12 +90,14 @@ def execute_ifeval_benchmark() -> None:
             tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
+            dataset = get_dataset_subset(dataset["train"], prop=0.006)
+
             # Step 3: Generate predictions on the dataset
             output_file = locate_data_path("explore-models", "ifeval")
             output_file = os.path.join(output_file, "model_responses.jsonl")
             with open(output_file, "w", encoding="utf-8") as f_out:
                 for sample in tqdm(
-                    dataset["train"]
+                    dataset
                 ):  # Use 'validation' or 'train' split if 'test' is not available
                     input_text = sample[
                         "prompt"
