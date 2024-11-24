@@ -33,15 +33,6 @@ def execute_performance_benchmark(
         id: str = "A", checkpoint_dir_name: Optional[str] = None
     ) -> None:
     DATASET_NAME: str = "argilla/ifeval-like-data"
-    # runs_path: str = locate_data_path(f"final-model-train/{id}/runs")
-    # for checkpoints_dir in os.listdir(runs_path):
-    #     checkpoints_dir_path: str = str(Path(runs_path) / checkpoints_dir)
-    #     checkpoint_path: str = None
-    #     for dir_name in sorted(os.listdir(checkpoints_dir_path)):
-    #         if dir_name.startswith("checkpoint-"):
-    #             checkpoint_path: str = os.path.join(checkpoints_dir_path, dir_name)
-
-    #     if checkpoint_path:
     dir_name: Union[str, None] = checkpoint_dir_name  # force checkpoint directory name
 
     runs_path: str = locate_data_path(f"final-model-train/{id}/runs")
