@@ -23,7 +23,7 @@ MODELS: list[dict[str, str]] = [
 ]
 
 
-def run_experiment_A(experiment_name="A") -> None:
+def run_experiment_A(id="A") -> None:
 
     dataset_name: str = "GAIR/lima"
     dataset_interface: DatasetInterface = DatasetInterface(dataset_name=dataset_name)
@@ -31,10 +31,11 @@ def run_experiment_A(experiment_name="A") -> None:
     for info in MODELS:
 
         model_name: str = info["name"]
-        model_path: str = locate_data_path(
-            section=(Path("explore-models") / experiment_name),
-            dir_name=clean_string(model_name)
-        )
+        rel_path: Path = Path("explore-models")
+        rel_path = rel_path / id / "runs" / clean_string(model_name)
+        model_path: str = locate_data_path(rel_path=str(rel_path))
+
+        # Training timing control
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25
@@ -48,7 +49,7 @@ def run_experiment_A(experiment_name="A") -> None:
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
             gradient_accumulation_steps=2,
-            per_device_eval_batch_size=2,
+            per_device_eval_batch_size=4,
             log_level="debug",
             logging_steps=10,
             learning_rate=1e-4,

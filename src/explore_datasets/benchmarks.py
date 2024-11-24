@@ -2,6 +2,7 @@
 import gc
 import os
 import json
+from pathlib import Path
 
 # ML dependencies
 import torch
@@ -11,7 +12,7 @@ from datasets import Dataset, load_dataset
 from tqdm import tqdm
 
 # Internal dependencies:
-from src.utils.interfaces import DatasetInterface, ModelInterface
+from src.utils.interfaces import ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import (
     load_model_tokenizer,
@@ -23,23 +24,23 @@ from src.utils.extra import (
 from src.ifeval.evaluation_main import main as ifeval_main
 
 
-MODELS: list[dict[str, str]] = [
-    {"name": "mistralai/Mistral-7B-v0.3"},
-    {"name": "meta-llama/Llama-3.1-8B"},
-    {"name": "Qwen/Qwen2.5-7B"},
-    {"name": "ibm-granite/granite-3.0-8b-base"},
+DATASETS: list[dict[str, str]] = [
+    {"name": "GAIR/lima"},
+    {"name": "databricks/databricks-dolly-15k"},
+    {"name": "tatsu-lab/alpaca"},
+    {"name": "argilla/ifeval-like-data"},
 ]
 
 
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def execute_performance_benchmark() -> None:
-    DATASET_NAME: str = "GAIR/lima"
-    for model in MODELS:
+def execute_performance_benchmark(id: str = "A") -> None:
+    MODEL: str = "GAIR/lima"
+    for DATASET_NAME in DATASETS:
         torch.cuda.empty_cache()
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-datasets", clean_string(model["name"])
+            f"explore-datasets/{clean_string(model['name'])}"
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -59,10 +60,11 @@ def execute_performance_benchmark() -> None:
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
-            data_path: str = locate_data_path("explore-datasets", "benchmarks")
+            rel_path: str = Path("explore-datasets") / id
+            data_path: str = locate_data_path(rel_path=rel_path)
             os.makedirs(data_path, exist_ok=True)
             json_path: str = os.path.join(
-                dir_name, f"{clean_string(model_name)}_results.jsonl"
+                dir_name, f"{clean_string(model_name)}-results.jsonl"
             )
             with open(json_path, "w") as json_file:
                 json.dump(results, json_file, indent=4)
@@ -78,12 +80,16 @@ def execute_performance_benchmark() -> None:
             gc.collect()
 
 
-def execute_ifeval_response() -> None:
+def execute_ifeval_response(id: str = "A") -> None:
     DATASET_NAME: str = "google/IFEval"
-    for model in MODELS:
-        torch.cuda.empty_cache()
+    MODEL_NAME: str = "mistralai/Mistral-7B-v0.3"
+    for dataset_info in DATASETS:
+        dataset_name: str = dataset_info["name"]
+        clean_model_name: str = clean_string(MODEL_NAME)
+        clean_dataset_name: str = clean_string(dataset_name)
+        checkpoint_dir: str = f"{clean_model_name}-{clean_dataset_name}"
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-datasets", clean_string(model["name"])
+            f"explore-datasets/{id}/runs/{checkpoint_dir}"
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -106,11 +112,12 @@ def execute_ifeval_response() -> None:
             dataset = get_dataset_subset(dataset["train"], prop=0.002, shuffle=False)
 
             # Step 3: Generate predictions on the dataset
-            output_file = locate_data_path("explore-datasets", "ifeval")
-            output_file = os.path.join(
-                output_file, f"{clean_string(model_name)}_responses.jsonl"
-            )
-            with open(output_file, "w", encoding="utf-8") as f_out:
+            output_file: Path = Path(locate_data_path(f"explore-datasets/{id}/ifeval"))
+            clean_model_name: str = clean_string(model_name)
+            clean_dataset_name: str = clean_string(dataset_name)
+            file_name: str = f"{clean_model_name}-{clean_dataset_name}-responses.jsonl"
+            file_path: str = str(output_file / file_name)
+            with open(file_path, "w", encoding="utf-8") as f_out:
                 for sample in tqdm(
                     dataset
                 ):  # Use 'validation' or 'train' split if 'test' is not available
@@ -127,7 +134,7 @@ def execute_ifeval_response() -> None:
                     # Generate output
                     outputs = model.generate(
                         inputs,
-                        attention_mask=inputs["attention_mask"],
+                        # attention_mask=inputs["attention_mask"],
                         max_length=256,
                         eos_token_id=tokenizer.eos_token_id,
                     )
@@ -147,6 +154,7 @@ def execute_ifeval_response() -> None:
                     # Write the JSON object to file
                     f_out.write(json.dumps(json_obj) + "\n")
 
+            # Cleanup
             model_interface.cleanup_model()
             del model
             del tokenizer
@@ -155,13 +163,17 @@ def execute_ifeval_response() -> None:
             gc.collect()
 
 
-def execute_ifeval_evaluation() -> None:
-    input_file = locate_data_path("ifeval") + "/input_data.jsonl"
-    ifeval_folder = locate_data_path("explore-datasets", "ifeval")
-    for model in MODELS:
-        model_name = model["name"]
-        responses_data = ifeval_folder + f"/{clean_string(model_name)}_responses.jsonl"
-        output_dir = ifeval_folder + f"/{clean_string(model_name)}_results"
+def execute_ifeval_evaluation(id: str = "A") -> None:
+    MODEL_NAME: str = "mistralai/Mistral-7B-v0.3"
+    input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
+    ifeval_folder: Path = Path(locate_data_path("explore-datasets")) / id / "ifeval"
+    for dataset_info in DATASETS:
+        dataset_name: str = dataset_info["name"]
+        clean_model_name: str = clean_string(MODEL_NAME)
+        clean_dataset_name: str = clean_string(dataset_name)
+        clean_mixed_name: str = f"{clean_model_name}-{clean_dataset_name}"
+        responses_data: str = str(ifeval_folder / f"{clean_mixed_name}-responses.jsonl")
+        output_dir: str = str(ifeval_folder / f"{clean_mixed_name}-results")
         ifeval_main(input_file, responses_data, output_dir)
 
 
@@ -170,3 +182,4 @@ if __name__ == "__main__":
     # execute_performance_benchmark()
     execute_ifeval_response()
     execute_ifeval_evaluation()
+    pass

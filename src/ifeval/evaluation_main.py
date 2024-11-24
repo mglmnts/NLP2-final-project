@@ -64,6 +64,7 @@ class OutputExample:
 def read_prompt_list(input_jsonl_filename):
     """Read inputs from jsonl."""
     inputs = []
+    print(f"file: {input_jsonl_filename}", type(input_jsonl_filename))
     with open(input_jsonl_filename, "r") as f:
         for l in f:
             example = json.loads(l)

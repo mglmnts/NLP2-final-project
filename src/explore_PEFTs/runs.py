@@ -221,7 +221,7 @@ PEFT_METHODS: list[dict] = [
 ]
 
 
-def run_experimet_A(experiment_name="A") -> None:
+def run_experimet_A(id="A") -> None:
     """
     Iterates over different Parameter-Efficient Fine-Tuning (PEFT) methods to train a
     specified model. For each PEFT method, it configures the training environment,
@@ -249,11 +249,11 @@ def run_experimet_A(experiment_name="A") -> None:
         config_params = method_info["params"]
 
         # Define unique directory for each PEFT method
-        model_path: str = locate_data_path(
-            section=str(Path("explore-PEFTs") / experiment_name),
-            dir_name=clean_string(f"{model_name}_{method_name}"),
-        )
+        rel_path: Path = Path("explore-PEFTs")
+        rel_path = rel_path / id / "runs" / f"{clean_string(model_name)}-{method_name}"
+        model_path: str = locate_data_path(rel_path=str(rel_path))
 
+        # Training timing control
         eval_steps: int = 10
         save_steps: int = 45
         warmup_steps: int = 25
@@ -267,7 +267,7 @@ def run_experimet_A(experiment_name="A") -> None:
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
             gradient_accumulation_steps=2,
-            per_device_eval_batch_size=2,
+            per_device_eval_batch_size=4,
             log_level="debug",
             logging_steps=10,
             learning_rate=1e-4,

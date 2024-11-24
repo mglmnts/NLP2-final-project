@@ -154,7 +154,7 @@ class DatasetInterface:
         if "test" not in self._tokenized_dataset:
             # Split 20% of 'train' into 'test'
             self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
-                test_size=0.2, seed=42
+                test_size=0.025, seed=42
             )
             print("No 'test' split found. Split 20% of 'train' into 'test'.")
 
@@ -450,20 +450,6 @@ class ModelInterface:
 
         return None
 
-    # def cleanup_model(self) -> None:
-    #     """
-    #     Cleans up the model from GPU memory by deleting the model instance,
-    #     clearing the GPU cache, and running garbage collection.
-    #     """
-    #     if self._model is not None:
-    #         # Elimina el modelo sin moverlo manualmente
-    #         del self._model
-    #         self._model = None
-    #         # Limpia la caché de GPU
-    #         torch.cuda.empty_cache()
-    #         # Ejecuta la recolección de basura
-    #         gc.collect()
-
     def cleanup_model(self) -> None:
         """
         Cleans up the model from GPU memory and clears any offloaded files.
@@ -478,87 +464,6 @@ class ModelInterface:
             offload_folder = "offload_dir"
             if os.path.exists(offload_folder):
                 shutil.rmtree(offload_folder)
-
-    # @classmethod
-    # def from_checkpoint(cls, checkpoint_path: str) -> "ModelInterface":
-    #     """
-    #     Class method to load the model and its tokenizer from a saved checkpoint.
-
-    #     Args:
-    #         checkpoint_path (str): The path to the checkpoint directory.
-
-    #     Returns:
-    #         ModelInterface: An instance of ModelInterface with the model loaded.
-
-    #     Raises:
-    #         ValueError: If the provided checkpoint path is not a valid directory.
-    #         Exception: If loading the model or tokenizer fails.
-    #     """
-
-    #     # Create a new instance
-    #     torch.cuda.empty_cache()
-    #     instance: ModelInterface = cls()
-
-    #     # Validate checkpoint path
-    #     if not os.path.isdir(checkpoint_path):
-    #         raise ValueError(
-    #             f"Checkpoint path '{checkpoint_path}' is not a valid directory."
-    #         )
-    #     model: AutoModelForCausalLM = AutoModelForCausalLM.from_pretrained(
-    #         checkpoint_path,
-    #         device_map="auto",
-    #         offload_folder="offload_dir",
-    #     )
-    #     instance._model = model
-    #     instance._name = model.config.model_type
-    #     instance._tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
-
-    #     return instance
-
-    # @classmethod
-    # def from_checkpoint(
-    #     cls, checkpoint_path: str, offload_folder: Optional[str] = None
-    # ) -> "ModelInterface":
-    #     """
-    #     Class method to load the model and its tokenizer from a saved checkpoint.
-    #     Args:
-    #         checkpoint_path (str): The path to the checkpoint directory.
-    #         offload_folder (Optional[str]): Directory to offload model weights if needed.
-
-    #     Returns:
-    #         ModelInterface: An instance of ModelInterface with the model loaded.
-    #     """
-    #     torch.cuda.empty_cache()
-    #     instance: ModelInterface = cls()
-
-    #     if not os.path.isdir(checkpoint_path):
-    #         raise ValueError(
-    #             f"Checkpoint path '{checkpoint_path}' is not a valid directory."
-    #         )
-
-    #     # Carga el modelo
-    #     # Cargar el modelo base desde Hugging Face
-    #     model_name = "ibm-granite/granite-3.0-8b-base"  # Modelo base a cargar
-    #     model = AutoModelForCausalLM.from_pretrained(
-    #         model_name,
-    #         device_map="auto",  # Usa "auto" para distribuir el modelo entre dispositivos
-    #         offload_folder=offload_folder,  # Si se necesita offloading de los pesos al disco
-    #     )
-
-    #     # Ahora carga el checkpoint del fine-tuning
-    #     model.load_state_dict(
-    #         torch.load(os.path.join(checkpoint_path, "pytorch_model.bin")), strict=False
-    #     )
-
-    #     # Cargar el tokenizer correspondiente
-    #     tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    #     # Asignar el modelo y el tokenizer al objeto ModelInterface
-    #     instance._model = model
-    #     instance._tokenizer = tokenizer
-    #     instance._name = model_name
-
-    #     return instance
 
     @classmethod
     def from_checkpoint(cls, checkpoint_path: str) -> "ModelInterface":
@@ -587,11 +492,12 @@ class ModelInterface:
             )
 
         # Load the PEFT config to get the base model name
-        peft_config = PeftConfig.from_pretrained(checkpoint_path)
-        base_model_name = peft_config.base_model_name_or_path
+        peft_config: PeftConfig = PeftConfig.from_pretrained(checkpoint_path)
+        base_model_name: str = peft_config.base_model_name_or_path
+        assert isinstance(base_model_name, str)
 
         # Load the base model with quantization configurations
-        model = AutoModelForCausalLM.from_pretrained(
+        model: AutoModelForCausalLM = AutoModelForCausalLM.from_pretrained(
             base_model_name,
             device_map="auto",
             offload_folder="offload_dir",

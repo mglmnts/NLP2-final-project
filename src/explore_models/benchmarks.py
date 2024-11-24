@@ -2,6 +2,7 @@
 import gc
 import os
 import json
+from pathlib import Path
 
 # ML dependencies
 import torch
@@ -16,30 +17,30 @@ from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import (
     load_model_tokenizer,
     clean_string,
+    get_src_path,
     locate_data_path,
     get_dataset_subset,
 )
-
 from src.ifeval.evaluation_main import main as ifeval_main
 
 
 MODELS: list[dict[str, str]] = [
     {"name": "mistralai/Mistral-7B-v0.3"},
     {"name": "meta-llama/Llama-3.1-8B"},
-    # {"name": "Qwen/Qwen2.5-7B"},
-    # {"name": "ibm-granite/granite-3.0-8b-base"},
+    {"name": "Qwen/Qwen2.5-7B"},
+    {"name": "ibm-granite/granite-3.0-8b-base"},
 ]
 
 
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def execute_performance_benchmark() -> None:
+def execute_performance_benchmark(id: str = "A") -> None:
     DATASET_NAME: str = "GAIR/lima"
     for model in MODELS:
         torch.cuda.empty_cache()
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-models", clean_string(model["name"])
+            f"explore-models/{clean_string(model['name'])}"
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -59,10 +60,11 @@ def execute_performance_benchmark() -> None:
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
-            data_path: str = locate_data_path("explore-models", "benchmarks")
+            rel_path: str = Path("explore-models") / id
+            data_path: str = locate_data_path(rel_path=rel_path)
             os.makedirs(data_path, exist_ok=True)
             json_path: str = os.path.join(
-                dir_name, f"{clean_string(model_name)}_results.jsonl"
+                dir_name, f"{clean_string(model_name)}-results.jsonl"
             )
             with open(json_path, "w") as json_file:
                 json.dump(results, json_file, indent=4)
@@ -78,12 +80,12 @@ def execute_performance_benchmark() -> None:
             gc.collect()
 
 
-def execute_ifeval_response() -> None:
+def execute_ifeval_response(id: str = "A") -> None:
     DATASET_NAME: str = "google/IFEval"
     for model in MODELS:
         torch.cuda.empty_cache()
         CHECKPOINTS_PATH: str = locate_data_path(
-            "explore-models", clean_string(model["name"])
+            f"explore-models/{id}/runs/{clean_string(model['name'])}"
         )
         checkpoint_path: str = None
         for dir_name in os.listdir(CHECKPOINTS_PATH):
@@ -104,14 +106,15 @@ def execute_ifeval_response() -> None:
             tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
-            dataset = get_dataset_subset(dataset["train"], prop=0.002, shuffle=False)
+            dataset = get_dataset_subset(dataset["train"], prop=0.4, shuffle=False)
 
             # Step 3: Generate predictions on the dataset
-            output_file = locate_data_path("explore-models", "ifeval")
-            output_file = os.path.join(
-                output_file, f"{clean_string(model_name)}_responses.jsonl"
-            )
-            with open(output_file, "w", encoding="utf-8") as f_out:
+            output_file: Path = Path(locate_data_path(f"explore-models/{id}/ifeval"))
+            clean_model_name: str = clean_string(model_name)
+            clean_dataset_name: str = clean_string(DATASET_NAME)
+            file_name: str = f"{clean_model_name}-{clean_dataset_name}-responses.jsonl"
+            file_path: str = str(output_file / file_name)
+            with open(file_path, "w", encoding="utf-8") as f_out:
                 for sample in tqdm(
                     dataset
                 ):  # Use 'validation' or 'train' split if 'test' is not available
@@ -157,13 +160,16 @@ def execute_ifeval_response() -> None:
             gc.collect()
 
 
-def execute_ifeval_evaluation() -> None:
-    input_file = locate_data_path("ifeval") + "/input_data.jsonl"
-    ifeval_folder = locate_data_path("explore-models", "ifeval")
+def execute_ifeval_evaluation(id: str = "A") -> None:
+    DATASET_NAME: str = "google/IFEval"
+    input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
+    ifeval_folder: Path = Path(locate_data_path("explore-models")) / id / "ifeval"
     for model in MODELS:
-        model_name = model["name"]
-        responses_data = ifeval_folder + f"/{clean_string(model_name)}_responses.jsonl"
-        output_dir = ifeval_folder + f"/{clean_string(model_name)}_results"
+        clean_model_name: str = clean_string(model["name"])
+        clean_dataset_name: str = clean_string(DATASET_NAME)
+        clean_mixed_name: str = f"{clean_model_name}-{clean_dataset_name}"
+        responses_data: str = str(ifeval_folder / f"{clean_mixed_name}-responses.jsonl")
+        output_dir: str = str(ifeval_folder / f"{clean_mixed_name}-results")
         ifeval_main(input_file, responses_data, output_dir)
 
 
@@ -171,4 +177,5 @@ if __name__ == "__main__":
 
     # execute_performance_benchmark()
     # execute_ifeval_response()
-    execute_ifeval_evaluation()
+    # execute_ifeval_evaluation()
+    pass
