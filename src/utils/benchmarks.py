@@ -1,4 +1,5 @@
 # ML dependencies
+from torch._tensor import Tensor
 from evaluate.module import EvaluationModule
 from datasets import Dataset
 from peft import PeftModel
@@ -105,7 +106,13 @@ class PerformanceBenchmark:
         start_time: float = time.time()
 
         for example in self.dataset:
-            inputs = example["conversations"]
+            key: str
+            example_keys: list[str] = list(example.keys)
+            if "conversations" in example_keys:
+                key = "converstions"
+            if "instruction" in example_keys:
+                key = "instruction"
+            inputs: Tensor = example[key]
             # Tokenize the input
             tokenized_input: BatchEncoding = self.tokenizer(
                 inputs, return_tensors="pt"
@@ -136,7 +143,13 @@ class PerformanceBenchmark:
         latencies: list[float] = []
 
         for example in self.dataset:
-            inputs = example["conversations"]
+            key: str
+            example_keys: list[str] = list(example.keys)
+            if "conversations" in example_keys:
+                key = "converstions"
+            if "instruction" in example_keys:
+                key = "instruction"
+            inputs: Tensor = example[key]
             # Tokenize the input
             tokenized_input: BatchEncoding = self.tokenizer(
                 inputs, return_tensors="pt"
@@ -167,7 +180,13 @@ class PerformanceBenchmark:
         start_time: float = time.time()
 
         for example in self.dataset:
-            inputs = example["conversations"]
+            key: str
+            example_keys: list[str] = list(example.keys)
+            if "conversations" in example_keys:
+                key = "converstions"
+            if "instruction" in example_keys:
+                key = "instruction"
+            inputs: Tensor = example[key]
             # Tokenize the input
             tokenized_input: BatchEncoding = self.tokenizer(
                 inputs, return_tensors="pt"
