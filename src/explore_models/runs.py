@@ -16,23 +16,25 @@ from src.utils.extra import clean_string, locate_data_path
 # Global Variables
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 MODELS: list[dict[str, str]] = [
-    {"name": "meta-llama/Llama-3.1-8B"},
-    {"name": "mistralai/Mistral-7B-v0.3"},
-    {"name": "Qwen/Qwen2.5-7B"},
+    # {"name": "meta-llama/Llama-3.1-8B"},
+    # {"name": "mistralai/Mistral-7B-v0.3"},
+    # {"name": "Qwen/Qwen2.5-7B"},
     {"name": "ibm-granite/granite-3.0-8b-base"},
 ]
 
 
 def run_experiment_A(id="A") -> None:
 
-    dataset_name: str = "GAIR/lima"
+    dataset_name: str = "argilla/ifeval-like-data"
     dataset_interface: DatasetInterface = DatasetInterface(dataset_name=dataset_name)
 
     for info in MODELS:
 
         model_name: str = info["name"]
         rel_path: Path = Path("explore-models")
-        rel_path = rel_path / id / "runs" / clean_string(model_name)
+        clean_model_name: str = clean_string(model_name)
+        clean_dataset_name: str = clean_string(dataset_name)
+        rel_path = rel_path / id / "runs" / f"{clean_model_name}-{clean_dataset_name}"
         model_path: str = locate_data_path(rel_path=str(rel_path))
 
         # Training timing control
@@ -45,7 +47,7 @@ def run_experiment_A(id="A") -> None:
         training_arguments: SFTConfig = SFTConfig(
             output_dir=model_path,
             eval_strategy="steps",
-            do_eval=False,
+            do_eval=True,
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
             gradient_accumulation_steps=2,
@@ -59,7 +61,7 @@ def run_experiment_A(id="A") -> None:
             warmup_steps=warmup_steps,
             lr_scheduler_type="linear",
             report_to="tensorboard",
-            logging_dir=(Path(model_path), "logs"),
+            logging_dir=str(Path(model_path) / "logs"),
             max_seq_length=512,
         )
 
@@ -81,20 +83,26 @@ def run_experiment_A(id="A") -> None:
             ],
         )
 
-        dataset_interface.set_model(model_name=model_name)
+        dataset_interface: DatasetInterface = DatasetInterface(
+            dataset_name=dataset_name, model_name=model_name
+        )
         gc.collect()
         model_interface: ModelInterface = ModelInterface()
         model_interface.load_model(name=model_name)
         model_interface.load_PEFT_config(config=peft_config)
         model_interface.load_dataset(interface=dataset_interface)
 
-        print(f"\n\n\nTraining: {model_name}\n")
+        print(f"\n\n\nTraining: {model_name}-{dataset_name}\n")
         model_interface.train(
             method=SFTTrainer,
             arguments=training_arguments,  # , method_config=sft_config
         )
+
+        # Clean up
         model_interface.cleanup_model()
+        dataset_interface.cleanup_dataset()
         del model_interface
+        del dataset_interface
         gc.collect()
 
 

@@ -60,7 +60,7 @@ def run_experiment_A(id="A") -> None:
             warmup_steps=warmup_steps,
             lr_scheduler_type="linear",
             report_to="tensorboard",
-            logging_dir=(Path(model_path) / "logs"),
+            logging_dir=str(Path(model_path) / "logs"),
             max_seq_length=512,
         )
 
@@ -94,7 +94,7 @@ def run_experiment_A(id="A") -> None:
             arguments=training_arguments,
         )
 
-        # Limpieza
+        # Clean up
         model_interface.cleanup_model()
         dataset_interface.cleanup_dataset()
         del model_interface

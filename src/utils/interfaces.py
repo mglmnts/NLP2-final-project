@@ -152,11 +152,21 @@ class DatasetInterface:
             self._tokenized_dataset = DatasetDict({"train": self._tokenized_dataset})
 
         if "test" not in self._tokenized_dataset:
-            # Split 20% of 'train' into 'test'
+            # # Split 20% of 'train' into 'test'
+            # test_proportion: float = 0.025
+
+            test_sample_count: int = 500
+            total_samples: int = len(self._tokenized_dataset["train"])
+            test_sample_count = min(test_sample_count, total_samples)
+            test_proportion: float = test_sample_count / total_samples
+
             self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
-                test_size=0.025, seed=42
+                test_size=test_proportion, seed=42
             )
-            print("No 'test' split found. Split 20% of 'train' into 'test'.")
+            print(
+                f"No 'test' split found."
+                f"Split {test_proportion*100:.4f}% of 'train' into 'test'."
+            )
 
         # Ensure the format is PyTorch-friendly
         format_columns: list[str] = ["input_ids", "attention_mask"]

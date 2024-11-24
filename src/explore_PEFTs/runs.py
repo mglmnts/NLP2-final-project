@@ -287,7 +287,9 @@ def run_experimet_A(id="A") -> None:
         except TypeError as e:
             raise ValueError(f"Error initializing {method_name} configuration: {e}")
 
-        dataset_interface.set_model(model_name=model_name)
+        dataset_interface: DatasetInterface = DatasetInterface(
+            dataset_name=dataset_name, model_name=model_name
+        )
         gc.collect()
         model_interface: ModelInterface = ModelInterface()
         model_interface.load_model(name=model_name)

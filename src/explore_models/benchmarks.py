@@ -51,14 +51,16 @@ def execute_performance_benchmark(id: str = "A") -> None:
             benchmark = PerformanceBenchmark(model, tokenizer, dataset["test"])
             results: dict = benchmark.run_benchmark()
 
+            # create json filename
+            clean_model_name: str = clean_string(model_name)
+            clean_dataset_name: str = clean_string(DATASET_NAME)
+            file_name: str = f"{clean_model_name}-{clean_dataset_name}-results.jsonl"
+
             # save benchmark results
-            rel_path: str = Path("explore-models") / id
-            data_path: str = locate_data_path(rel_path=rel_path)
-            os.makedirs(data_path, exist_ok=True)
-            json_path: str = os.path.join(
-                dir_name, f"{clean_string(model_name)}-results.jsonl"
-            )
-            with open(json_path, "w") as json_file:
+            rel_path: str = f"explore-models/{id}/performance-benchmarks"
+            output_file: Path = Path(locate_data_path(rel_path=rel_path))
+            file_path: str = str(output_file / file_name)
+            with open(file_path, "w") as json_file:
                 json.dump(results, json_file, indent=4)
 
             # display results
