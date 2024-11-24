@@ -36,9 +36,7 @@ def run_experiment_A(id="A") -> None:
     model_name: str = MODELS[3]
     dataset_name: str = DATASETS[3]
     rel_path: Path = Path("final-model-train")
-    clean_model_name: str = clean_string(model_name)
-    clean_dataset_name: str = clean_string(dataset_name)
-    rel_path = rel_path / id / "runs" / f"{clean_model_name}-{clean_dataset_name}"
+    rel_path = rel_path / id / "runs"
     model_path: str = locate_data_path(rel_path=str(rel_path))
 
     # Training timing control
