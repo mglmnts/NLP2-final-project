@@ -52,13 +52,11 @@ def execute_performance_benchmark(id: str = "A") -> None:
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
-            rel_path: str = Path("explore-PEFTs") / id
-            data_path: str = locate_data_path(rel_path=rel_path)
-            os.makedirs(data_path, exist_ok=True)
-            json_path: str = os.path.join(
-                dir_name, f"{clean_string(model_name)}-results.jsonl"
-            )
-            with open(json_path, "w") as json_file:
+            rel_path: str = f"explore-PEFTs/{id}/performance-benchmarks"
+            output_file: Path = Path(locate_data_path(rel_path=rel_path))
+            file_name: str = f"{dir_name}-results.jsonl"
+            file_path: str = str(output_file / file_name)
+            with open(file_path, "w") as json_file:
                 json.dump(results, json_file, indent=4)
 
             # display results

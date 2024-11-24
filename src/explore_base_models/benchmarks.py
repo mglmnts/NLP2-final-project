@@ -40,9 +40,6 @@ def execute_performance_benchmark(id: str = "A") -> None:
 
     for model_info in MODELS:
         model_interface: ModelInterface
-        # model_interface = ModelInterface.from_checkpoint(
-        #    checkpoint_path=checkpoint_path
-        # )
         model_interface = ModelInterface.load_model(name=model_info["name"])
         model: str = model_interface.model
         model_name: str = model_interface.name
@@ -55,8 +52,7 @@ def execute_performance_benchmark(id: str = "A") -> None:
         # create json filename
         model_name: str = model_info["name"]
         clean_model_name: str = clean_string(model_name)
-        clean_dataset_name: str = clean_string(DATASET_NAME)
-        file_name: str = f"{clean_model_name}-{clean_dataset_name}-results.jsonl"
+        file_name: str = f"{clean_model_name}-pretrained-results.jsonl"
 
         # save benchmark results
         rel_path: str = f"explore-base-models/{id}/performance-benchmarks"
@@ -78,87 +74,82 @@ def execute_performance_benchmark(id: str = "A") -> None:
 
 def execute_ifeval_response(id: str = "A") -> None:
     DATASET_NAME: str = "google/IFEval"
-    runs_path: str = locate_data_path(f"explore-models/{id}/runs")
-    for checkpoints_dir in os.listdir(runs_path):
-        checkpoints_dir_path: str = str(Path(runs_path) / checkpoints_dir)
-        checkpoint_path: str = None
-        for dir_name in sorted(os.listdir(checkpoints_dir_path)):
-            if dir_name.startswith("checkpoint-"):
-                checkpoint_path: str = os.path.join(checkpoints_dir_path, dir_name)
 
-        if checkpoint_path:
-            # Step 0. Load model
-            torch.cuda.empty_cache()
-            model_interface: ModelInterface
-            model_interface = ModelInterface.from_checkpoint(
-                checkpoint_path=checkpoint_path
-            )
-            model: str = model_interface.model
-            model_name: str = model_interface.name
+    for model_info in MODELS:
+        model_interface: ModelInterface
+        model_interface = ModelInterface.load_model(name=model_info["name"])
+        model: str = model_interface.model
+        model_name: str = model_interface.name
 
-            # Step 1: Load tokenizer
-            tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
-            # Step 2: Load the google/IFEval dataset
-            dataset: Dataset = load_dataset(path=DATASET_NAME)
-            dataset = get_dataset_subset(dataset["train"], prop=0.4, shuffle=False)
+        tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
+        dataset: Dataset = load_dataset(path=DATASET_NAME)
+        dataset = get_dataset_subset(dataset["train"], prop=0.4, shuffle=False)
 
-            # Step 3: Generate predictions on the dataset
-            output_file: Path = Path(locate_data_path(f"explore-models/{id}/ifeval"))
-            file_name: str = f"{checkpoints_dir}-responses.jsonl"
-            file_path: str = str(output_file / file_name)
-            with open(file_path, "w", encoding="utf-8") as f_out:
-                for sample in tqdm(
-                    dataset
-                ):  # Use 'validation' or 'train' split if 'test' is not available
-                    input_text = sample[
-                        "prompt"
-                    ]  # Adjust the field name based on the dataset's structure
+        # create json filename
+        model_name: str = model_info["name"]
+        clean_model_name: str = clean_string(model_name)
+        file_name: str = f"{clean_model_name}-pretrained-responses.jsonl"
 
-                    # Prepare the input prompt
-                    prompt: str = input_text
+        # save benchmark results
+        rel_path: str = f"explore-base-models/{id}/ifeval"
+        output_file: Path = Path(locate_data_path(rel_path=rel_path))
+        file_path: str = str(output_file / file_name)
+        with open(file_path, "w", encoding="utf-8") as f_out:
+            for sample in tqdm(
+                dataset
+            ):  # Use 'validation' or 'train' split if 'test' is not available
+                input_text = sample[
+                    "prompt"
+                ]  # Adjust the field name based on the dataset's structure
 
-                    # Tokenize input
-                    inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                # Prepare the input prompt
+                prompt: str = input_text
 
-                    # Generate output
-                    outputs = model.generate(
-                        inputs,
-                        # attention_mask=inputs["attention_mask"],
-                        max_length=256,
-                        eos_token_id=tokenizer.eos_token_id,
-                    )
+                # Tokenize input
+                inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
-                    # Decode output
-                    generated_text = tokenizer.decode(
-                        outputs[0], skip_special_tokens=True
-                    )
+                # Generate output
+                outputs = model.generate(
+                    inputs,
+                    # attention_mask=inputs["attention_mask"],
+                    max_length=256,
+                    eos_token_id=tokenizer.eos_token_id,
+                )
 
-                    # Since the model may include the prompt in its output, we extract the
-                    # generated response
-                    response = generated_text[len(prompt) :]
+                # Decode output
+                generated_text = tokenizer.decode(
+                    outputs[0], skip_special_tokens=True
+                )
 
-                    # Prepare the JSON object
-                    json_obj = {"prompt": prompt, "response": response}
+                # Since the model may include the prompt in its output, we extract the
+                # generated response
+                response = generated_text[len(prompt) :]
 
-                    # Write the JSON object to file
-                    f_out.write(json.dumps(json_obj) + "\n")
+                # Prepare the JSON object
+                json_obj = {"prompt": prompt, "response": response}
 
-            # Cleanup
-            model_interface.cleanup_model()
-            del model
-            del tokenizer
-            del model_interface
-            torch.cuda.empty_cache()
-            gc.collect()
+                # Write the JSON object to file
+                f_out.write(json.dumps(json_obj) + "\n")
+
+        # Cleanup
+        model_interface.cleanup_model()
+        del model
+        del tokenizer
+        del model_interface
+        torch.cuda.empty_cache()
+        gc.collect()
+
+
+
 
 
 def execute_ifeval_evaluation(id: str = "A") -> None:
     input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
-    ifeval_folder: Path = Path(locate_data_path("explore-models")) / id / "ifeval"
-    runs_path: str = locate_data_path(f"explore-models/{id}/runs")
-    for checkpoints_dir in os.listdir(runs_path):
-        responses_data: str = str(ifeval_folder / f"{checkpoints_dir}-responses.jsonl")
-        output_dir: str = str(ifeval_folder / f"{checkpoints_dir}-results")
+    ifeval_folder: Path = Path(locate_data_path("explore-base-models")) / id / "ifeval"
+    for model_info in MODELS:
+        filename: str = f"{clean_string(model_info["name"])}-pretrained"
+        responses_data: str = str(ifeval_folder / f"{filename}-responses.jsonl")
+        output_dir: str = str(ifeval_folder / f"{filename}-results")
         ifeval_main(input_file, responses_data, output_dir)
 
 
