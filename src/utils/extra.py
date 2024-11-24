@@ -7,6 +7,7 @@ from typing import Optional, Union
 # ML dependencies
 import nltk
 from nltk.data import find
+from datasets import Dataset
 from transformers import AutoTokenizer
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
@@ -84,9 +85,6 @@ def locate_data_path(rel_path: str) -> str:
     dir_path: str = os.path.join(src_path.parent, "data", rel_path)
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path
-
-
-from datasets import Dataset
 
 
 def get_dataset_subset(

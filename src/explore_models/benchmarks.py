@@ -19,8 +19,6 @@ from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import (
     load_model_tokenizer,
-    clean_string,
-    get_src_path,
     locate_data_path,
     get_dataset_subset,
     ensure_punkt_available,
@@ -49,9 +47,12 @@ def execute_performance_benchmark(id: str = "A") -> None:
             model: str = model_interface.model
             model_name: str = model_interface.name
 
-            tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
-            dataset: Dataset = load_dataset(path=DATASET_NAME)
-            benchmark = PerformanceBenchmark(model, tokenizer, dataset["test"])
+            tokenizer: PreTrainedTokenizerFast
+            tokenizer = load_model_tokenizer(model_name=model_name)
+            dataset_interface: DatasetInterface
+            dataset_interface = DatasetInterface(dataset_name=DATASET_NAME)
+            dataset_test: Dataset = dataset_interface.raw_dataset["test"]
+            benchmark = PerformanceBenchmark(model, tokenizer, dataset_test)
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
@@ -96,6 +97,21 @@ def execute_ifeval_response(id: str = "A") -> None:
             # Step 1: Load tokenizer
             tokenizer: PreTrainedTokenizerFast
             tokenizer = load_model_tokenizer(model_name=model_name)
+
+            # Ensure pad_token_id is set
+            if tokenizer.pad_token_id is None:
+                if tokenizer.eos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.eos_token_id
+                    print(f"Pad Token ID set to EOS Token ID: {tokenizer.pad_token_id}")
+                elif tokenizer.bos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.bos_token_id
+                    print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
+                else:
+                    tokenizer.pad_token_id = 0  # Default value
+                    print(
+                        f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
+                    )
+
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
             dataset = get_dataset_subset(dataset["train"], prop=0.4, shuffle=False)
@@ -137,8 +153,8 @@ def execute_ifeval_response(id: str = "A") -> None:
                         outputs[0], skip_special_tokens=True
                     )
 
-                    # Since the model may include the prompt in its output, we extract the
-                    # generated response
+                    # Since the model may include the prompt in its output, we extract
+                    # the generated response
                     response: str = generated_text[len(prompt) :]
 
                     # Prepare the JSON object

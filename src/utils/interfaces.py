@@ -39,6 +39,7 @@ class DatasetInterface:
         self,
         dataset_name: str,
         model_name: Optional[str] = None,
+        auto_split: Optional[bool] = True,
     ) -> None:
         """
         Initializes the DatasetInterface with a specified dataset and optional model.
@@ -61,6 +62,10 @@ class DatasetInterface:
         self._tokenized_dataset: Union[Dataset, DatasetDict]
 
         self._dataset = load_dataset(path=dataset_name)
+
+        if auto_split:
+            self.dataset_split()
+
         if model_name is not None:
             self.set_model(model_name=model_name)
 
@@ -142,27 +147,27 @@ class DatasetInterface:
             if col in self._tokenized_dataset.column_names:
                 self._tokenized_dataset = self._tokenized_dataset.remove_columns(col)
 
-        # Ensure that a 'test' split exists
-        if not isinstance(self._tokenized_dataset, DatasetDict):
-            # If the dataset is not a DatasetDict, convert it to one with only 'train'
-            self._tokenized_dataset = DatasetDict({"train": self._tokenized_dataset})
+        # # Ensure that a 'test' split exists
+        # if not isinstance(self._tokenized_dataset, DatasetDict):
+        #     # If the dataset is not a DatasetDict, convert it to one with only 'train'
+        #     self._tokenized_dataset = DatasetDict({"train": self._tokenized_dataset})
 
-        if "test" not in self._tokenized_dataset:
-            # # Split 20% of 'train' into 'test'
-            # test_proportion: float = 0.025
+        # if "test" not in self._tokenized_dataset:
+        #     # # Split 20% of 'train' into 'test'
+        #     # test_proportion: float = 0.025
 
-            test_sample_count: int = 500
-            total_samples: int = len(self._tokenized_dataset["train"])
-            test_sample_count = min(test_sample_count, total_samples)
-            test_proportion: float = test_sample_count / total_samples
+        #     test_sample_count: int = 500
+        #     total_samples: int = len(self._tokenized_dataset["train"])
+        #     test_sample_count = min(test_sample_count, total_samples)
+        #     test_proportion: float = test_sample_count / total_samples
 
-            self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
-                test_size=test_proportion, seed=42
-            )
-            print(
-                f"No 'test' split found."
-                f"Split {test_proportion*100:.4f}% of 'train' into 'test'."
-            )
+        #     self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
+        #         test_size=test_proportion, seed=42
+        #     )
+        #     print(
+        #         f"No 'test' split found."
+        #         f"Split {test_proportion*100:.4f}% of 'train' into 'test'."
+        #     )
 
         # Ensure the format is PyTorch-friendly
         format_columns: list[str] = ["input_ids", "attention_mask"]
@@ -263,6 +268,45 @@ class DatasetInterface:
         dataset_interface = cls(dataset=merged_dataset, model_name=model_name)
 
         return dataset_interface
+
+    def dataset_split(
+        self,
+        test_proportion: Optional[float] = None,
+        test_samples: Optional[int] = None,
+        seed: Optional[int] = 42,
+    ) -> DatasetDict:
+
+        assert test_proportion is None or test_samples is None
+
+        train_samples: int
+        new_dataset: DatasetDict
+        if isinstance(self._dataset, Dataset):
+            train_samples = len(self._dataset)
+            new_dataset = DatasetDict({"train": self._dataset})
+        if isinstance(self._dataset, DatasetDict):
+            assert "train" in self._dataset.keys(), "no train split in dataset"
+            if "test" in self._dataset.keys():
+                return None
+            train_samples = len(self._dataset["train"])
+            new_dataset = self._dataset
+
+        _test_proportion: float
+        if test_proportion is None and test_samples is None:
+            _test_proportion = min(500, train_samples // 4) / train_samples
+
+        elif test_proportion is None:
+            assert test_samples <= train_samples
+            _test_proportion = test_samples / train_samples
+
+        elif test_samples is None:
+            assert _test_proportion >= 0 and _test_proportion <= 1
+
+        self._dataset = new_dataset["train"].train_test_split(
+            test_size=_test_proportion, seed=seed
+        )
+        print(f"Split {test_proportion*100:.4f}% of 'train' into 'test'.")
+
+        return None
 
     def _format_conversation(
         self, examples: dict[str, Union[list[str], list[list[str]]]]

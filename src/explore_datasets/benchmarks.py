@@ -1,4 +1,3 @@
-# Standard Library dependencies
 import gc
 import os
 import json
@@ -6,13 +5,16 @@ from pathlib import Path
 
 # ML dependencies
 import torch
+from torch._tensor import Tensor
 from datasets import Dataset, load_dataset
+from transformers.tokenization_utils_base import BatchEncoding
+from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 # Other dependencies
 from tqdm import tqdm
 
 # Internal dependencies:
-from src.utils.interfaces import ModelInterface
+from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import (
     load_model_tokenizer,
@@ -45,9 +47,12 @@ def execute_performance_benchmark(id: str = "A") -> None:
             model: str = model_interface.model
             model_name: str = model_interface.name
 
-            tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
-            dataset: Dataset = load_dataset(path=DATASET_NAME)
-            benchmark = PerformanceBenchmark(model, tokenizer, dataset["test"])
+            tokenizer: PreTrainedTokenizerFast
+            tokenizer = load_model_tokenizer(model_name=model_name)
+            dataset_interface: DatasetInterface
+            dataset_interface = DatasetInterface(dataset_name=DATASET_NAME)
+            dataset_test: Dataset = dataset_interface.raw_dataset["test"]
+            benchmark = PerformanceBenchmark(model, tokenizer, dataset_test)
             results: dict = benchmark.run_benchmark()
 
             # save benchmark results
@@ -91,7 +96,23 @@ def execute_ifeval_response(id: str = "A") -> None:
             model_name: str = model_interface.name
 
             # Step 1: Load tokenizer
-            tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
+            tokenizer: PreTrainedTokenizerFast
+            tokenizer = load_model_tokenizer(model_name=model_name)
+
+            # Ensure pad_token_id is set
+            if tokenizer.pad_token_id is None:
+                if tokenizer.eos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.eos_token_id
+                    print(f"Pad Token ID set to EOS Token ID: {tokenizer.pad_token_id}")
+                elif tokenizer.bos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.bos_token_id
+                    print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
+                else:
+                    tokenizer.pad_token_id = 0  # Default value
+                    print(
+                        f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
+                    )
+
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
             dataset = get_dataset_subset(dataset["train"], prop=0.5, shuffle=False)
@@ -104,32 +125,38 @@ def execute_ifeval_response(id: str = "A") -> None:
                 for sample in tqdm(
                     dataset
                 ):  # Use 'validation' or 'train' split if 'test' is not available
-                    input_text = sample[
-                        "prompt"
-                    ]  # Adjust the field name based on the dataset's structure
-
-                    # Prepare the input prompt
-                    prompt: str = input_text
+                    # Adjust the field name ("prompt") based on the dataset's structure
+                    input_text: str = sample["prompt"]
+                    max_lenght: int = 256
+                    prompt: str = input_text[:max_lenght]  # prepare the input prompt
 
                     # Tokenize input
-                    inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                    # inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                    inputs: BatchEncoding = tokenizer(
+                        prompt,
+                        truncation=True,
+                        max_length=max_lenght,
+                        # padding="max_length",
+                        return_tensors="pt",
+                    )
+                    input_ids: Tensor = inputs["input_ids"]
+                    att_mask: Tensor = inputs["attention_mask"]
 
-                    # Generate output
                     outputs = model.generate(
-                        inputs,
-                        # attention_mask=inputs["attention_mask"],
-                        max_length=256,
+                        input_ids=input_ids.to(dtype=torch.long, device=device),
+                        attention_mask=att_mask.to(dtype=torch.long, device=device),
+                        new_max_tokens=max_lenght,
                         eos_token_id=tokenizer.eos_token_id,
                     )
 
                     # Decode output
-                    generated_text = tokenizer.decode(
+                    generated_text: str = tokenizer.decode(
                         outputs[0], skip_special_tokens=True
                     )
 
-                    # Since the model may include the prompt in its output, we extract the
-                    # generated response
-                    response = generated_text[len(prompt) :]
+                    # Since the model may include the prompt in its output, we extract
+                    # the generated response
+                    response: str = generated_text[len(prompt) :]
 
                     # Prepare the JSON object
                     json_obj = {"prompt": prompt, "response": response}
