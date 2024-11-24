@@ -9,7 +9,7 @@ from typing import Optional, Type, Union
 import torch
 from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets
 from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
-from peft.config import PeftConfig, PeftModel
+from peft.config import PeftConfig
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -299,12 +299,13 @@ class DatasetInterface:
             _test_proportion = test_samples / train_samples
 
         elif test_samples is None:
-            assert _test_proportion >= 0 and _test_proportion <= 1
+            assert test_proportion >= 0 and test_proportion <= 1
+            _test_proportion = test_proportion
 
         self._dataset = new_dataset["train"].train_test_split(
             test_size=_test_proportion, seed=seed
         )
-        print(f"Split {test_proportion*100:.4f}% of 'train' into 'test'.")
+        print(f"Split {_test_proportion*100:.4f}% of 'train' into 'test'.")
 
         return None
 

@@ -144,8 +144,9 @@ def execute_ifeval_response(id: str = "A") -> None:
                     outputs = model.generate(
                         input_ids=input_ids.to(dtype=torch.long, device=device),
                         attention_mask=att_mask.to(dtype=torch.long, device=device),
-                        new_max_tokens=max_lenght,
+                        max_new_tokens=max_lenght,
                         eos_token_id=tokenizer.eos_token_id,
+                        pad_token_id=tokenizer.pad_token_id,
                     )
 
                     # Decode output

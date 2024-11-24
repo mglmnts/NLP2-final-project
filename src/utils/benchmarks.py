@@ -107,7 +107,7 @@ class PerformanceBenchmark:
 
         for example in self.dataset:
             key: str
-            example_keys: list[str] = list(example.keys)
+            example_keys: list[str] = list(example.keys())
             if "conversations" in example_keys:
                 key = "converstions"
             if "instruction" in example_keys:
@@ -144,7 +144,7 @@ class PerformanceBenchmark:
 
         for example in self.dataset:
             key: str
-            example_keys: list[str] = list(example.keys)
+            example_keys: list[str] = list(example.keys())
             if "conversations" in example_keys:
                 key = "converstions"
             if "instruction" in example_keys:
@@ -181,7 +181,7 @@ class PerformanceBenchmark:
 
         for example in self.dataset:
             key: str
-            example_keys: list[str] = list(example.keys)
+            example_keys: list[str] = list(example.keys())
             if "conversations" in example_keys:
                 key = "converstions"
             if "instruction" in example_keys:

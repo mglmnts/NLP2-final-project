@@ -143,21 +143,22 @@ def execute_ifeval_response(id: str = "A") -> None:
                     outputs = model.generate(
                         input_ids=input_ids.to(dtype=torch.long, device=device),
                         attention_mask=att_mask.to(dtype=torch.long, device=device),
-                        new_max_tokens=max_lenght,
+                        max_new_tokens=max_lenght,
                         eos_token_id=tokenizer.eos_token_id,
+                        pad_token_id=tokenizer.pad_token_id,
                     )
 
                     # Decode output
-                    generated_text = tokenizer.decode(
+                    generated_text: str = tokenizer.decode(
                         outputs[0], skip_special_tokens=True
                     )
 
-                    # Since the model may include the prompt in its output, we extract the
-                    # generated response
-                    response = generated_text[len(prompt) :]
+                    # Since the model may include the prompt in its output, we extract
+                    # the generated response
+                    response: str = generated_text[len(prompt) :]
 
                     # Prepare the JSON object
-                    json_obj = {"prompt": prompt, "response": response}
+                    json_obj: dict = {"prompt": prompt, "response": response}
 
                     # Write the JSON object to file
                     f_out.write(json.dumps(json_obj) + "\n")

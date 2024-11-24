@@ -41,8 +41,8 @@ def execute_performance_benchmark(id: str = "A") -> None:
     DATASET_NAME: str = "argilla/ifeval-like-data"
 
     for model_info in MODELS:
-        model_interface: ModelInterface
-        model_interface = ModelInterface.load_model(name=model_info["name"])
+        model_interface: ModelInterface = ModelInterface()
+        model_interface.load_model(name=model_info["name"])
         model: str = model_interface.model
         model_name: str = model_interface.name
 
@@ -138,8 +138,9 @@ def execute_ifeval_response(id: str = "A") -> None:
                 outputs = model.generate(
                     input_ids=input_ids.to(dtype=torch.long, device=device),
                     attention_mask=att_mask.to(dtype=torch.long, device=device),
-                    new_max_tokens=max_lenght,
+                    max_new_tokens=max_lenght,
                     eos_token_id=tokenizer.eos_token_id,
+                    pad_token_id=tokenizer.pad_token_id
                 )
 
                 # Decode output
