@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Optional, Union
 
 # ML dependencies
+import nltk
+from nltk.data import find
 from transformers import AutoTokenizer
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
@@ -114,3 +116,21 @@ def get_dataset_subset(
     subset = dataset.select(range(num_samples))
 
     return subset
+
+
+def ensure_punkt_available() -> None:
+    try:
+        # Intenta encontrar el recurso 'punkt'
+        find("tokenizers/punkt")
+        print("El recurso 'punkt' ya está disponible.")
+    except LookupError:
+        # Si no está disponible, descárgalo
+        print("El recurso 'punkt' no está disponible. Procediendo a descargarlo...")
+        nltk.download("punkt")
+    try:
+        find("tokenizers/punkt_tab")
+        nltk.download("punkt_tab")
+    except LookupError:
+        # Si no está disponible, descárgalo
+        print("El recurso 'punkt_tab' no está disponible. Procediendo a descargarlo...")
+        nltk.download("punkt_tab")

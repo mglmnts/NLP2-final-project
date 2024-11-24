@@ -20,6 +20,7 @@ from src.utils.extra import (
     get_src_path,
     locate_data_path,
     get_dataset_subset,
+    ensure_punkt_available,
 )
 from src.ifeval.evaluation_main import main as ifeval_main
 
@@ -29,16 +30,6 @@ device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 def execute_performance_benchmark(id: str = "A") -> None:
     DATASET_NAME: str = "argilla/ifeval-like-data"
-    # for model in MODELS:
-    #     torch.cuda.empty_cache()
-    #     CHECKPOINTS_PATH: str = locate_data_path(
-    #         f"explore-models/{clean_string(model['name'])}"
-    #     )
-    #     checkpoint_path: str = None
-    #     for dir_name in os.listdir(CHECKPOINTS_PATH):
-    #         if dir_name.startswith("checkpoint-"):
-    #             checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
-
     runs_path: str = locate_data_path(f"explore-models/{id}/runs")
     for checkpoints_dir in os.listdir(runs_path):
         checkpoints_dir_path: str = str(Path(runs_path) / checkpoints_dir)
@@ -83,16 +74,6 @@ def execute_performance_benchmark(id: str = "A") -> None:
 
 def execute_ifeval_response(id: str = "A") -> None:
     DATASET_NAME: str = "google/IFEval"
-    # for model in MODELS:
-    #     torch.cuda.empty_cache()
-    #     CHECKPOINTS_PATH: str = locate_data_path(
-    #         f"explore-models/{id}/runs/{clean_string(model['name'])}"
-    #     )
-    #     checkpoint_path: str = None
-    #     for dir_name in os.listdir(CHECKPOINTS_PATH):
-    #         if dir_name.startswith("checkpoint-"):
-    #             checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
-
     runs_path: str = locate_data_path(f"explore-models/{id}/runs")
     for checkpoints_dir in os.listdir(runs_path):
         checkpoints_dir_path: str = str(Path(runs_path) / checkpoints_dir)
@@ -170,13 +151,6 @@ def execute_ifeval_response(id: str = "A") -> None:
 def execute_ifeval_evaluation(id: str = "A") -> None:
     input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
     ifeval_folder: Path = Path(locate_data_path("explore-models")) / id / "ifeval"
-    # for model in MODELS:
-    #     clean_model_name: str = clean_string(model["name"])
-    #     clean_dataset_name: str = clean_string(DATASET_NAME)
-    #     clean_mixed_name: str = f"{clean_model_name}-{clean_dataset_name}"
-    #     responses_data: str = str(ifeval_folder / f"{clean_mixed_name}-responses.jsonl")
-    #     output_dir: str = str(ifeval_folder / f"{clean_mixed_name}-results")
-    #     ifeval_main(input_file, responses_data, output_dir)
     runs_path: str = locate_data_path(f"explore-models/{id}/runs")
     for checkpoints_dir in os.listdir(runs_path):
         responses_data: str = str(ifeval_folder / f"{checkpoints_dir}-responses.jsonl")
@@ -186,6 +160,10 @@ def execute_ifeval_evaluation(id: str = "A") -> None:
 
 if __name__ == "__main__":
 
+    # do not remove this
+    ensure_punkt_available()
+
+    # BENCHMARKS
     # execute_performance_benchmark()
     # execute_ifeval_response()
     # execute_ifeval_evaluation()

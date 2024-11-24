@@ -37,7 +37,7 @@ def run_experiment_A(id="A") -> None:
         model_path: str = locate_data_path(rel_path=str(rel_path))
 
         # Training timing control
-        eval_steps: int = 10
+        eval_steps: int = 100  # 25
         save_steps: int = 45
         warmup_steps: int = 25
         max_steps: int = 100

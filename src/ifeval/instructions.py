@@ -26,6 +26,24 @@ import langdetect
 
 from src.ifeval import instructions_util
 
+# import nltk
+# from nltk.data import find
+
+
+# def ensure_punkt_available():
+#     try:
+#         # Intenta encontrar el recurso 'punkt'
+#         find("tokenizers/punkt")
+#         print("El recurso 'punkt' ya está disponible.")
+#     except LookupError:
+#         # Si no está disponible, descárgalo
+#         print("El recurso 'punkt' no está disponible. Procediendo a descargarlo...")
+#         nltk.download("punkt")
+
+
+# # Llama a la función
+# ensure_punkt_available()
+
 
 _InstructionArgsDtype = Optional[Dict[str, Union[int, str, Sequence[str]]]]
 
