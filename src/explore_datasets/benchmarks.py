@@ -24,28 +24,19 @@ from src.utils.extra import (
 from src.ifeval.evaluation_main import main as ifeval_main
 
 
-DATASETS: list[dict[str, str]] = [
-    {"name": "GAIR/lima"},
-    {"name": "databricks/databricks-dolly-15k"},
-    {"name": "tatsu-lab/alpaca"},
-    {"name": "argilla/ifeval-like-data"},
-]
-
-
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def execute_performance_benchmark(id: str = "A") -> None:
-    MODEL: str = "GAIR/lima"
-    for DATASET_NAME in DATASETS:
-        torch.cuda.empty_cache()
-        CHECKPOINTS_PATH: str = locate_data_path(
-            f"explore-datasets/{clean_string(model['name'])}"
-        )
+    assert False, "This benchmark makes no sense to compare models"
+    DATASET_NAME: str = "argilla/ifeval-like-data"
+    runs_path: str = f"explore-datasets/{id}/runs"
+    for checkpoints_dir in os.listdir(runs_path):
         checkpoint_path: str = None
-        for dir_name in os.listdir(CHECKPOINTS_PATH):
+        for dir_name in os.listdir(checkpoints_dir):
             if dir_name.startswith("checkpoint-"):
-                checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
+                checkpoint_path: str = os.path.join(checkpoints_dir, dir_name)
+
         if checkpoint_path:
             model_interface: ModelInterface
             model_interface = ModelInterface.from_checkpoint(
@@ -82,19 +73,21 @@ def execute_performance_benchmark(id: str = "A") -> None:
 
 def execute_ifeval_response(id: str = "A") -> None:
     DATASET_NAME: str = "google/IFEval"
-    MODEL_NAME: str = "mistralai/Mistral-7B-v0.3"
-    for dataset_info in DATASETS:
-        dataset_name: str = dataset_info["name"]
-        clean_model_name: str = clean_string(MODEL_NAME)
-        clean_dataset_name: str = clean_string(dataset_name)
-        checkpoint_dir: str = f"{clean_model_name}-{clean_dataset_name}"
-        CHECKPOINTS_PATH: str = locate_data_path(
-            f"explore-datasets/{id}/runs/{checkpoint_dir}"
-        )
+    # for dataset_info in DATASETS:
+    #     dataset_name: str = dataset_info["name"]
+    #     clean_model_name: str = clean_string(MODEL_NAME)
+    #     clean_dataset_name: str = clean_string(dataset_name)
+    #     checkpoint_dir: str = f"{clean_model_name}-{clean_dataset_name}"
+    #     checkpoints_dir: str = locate_data_path(
+    #         f"explore-datasets/{id}/runs/{checkpoint_dir}"
+    #     )
+    runs_path: str = locate_data_path(f"explore-datasets/{id}/runs")
+    for checkpoints_dir in os.listdir(runs_path):
+        checkpoints_dir_path: str = str(Path(runs_path) / checkpoints_dir)
         checkpoint_path: str = None
-        for dir_name in os.listdir(CHECKPOINTS_PATH):
+        for dir_name in sorted(os.listdir(checkpoints_dir_path)):
             if dir_name.startswith("checkpoint-"):
-                checkpoint_path: str = os.path.join(CHECKPOINTS_PATH, dir_name)
+                checkpoint_path: str = os.path.join(checkpoints_dir_path, dir_name)
 
         if checkpoint_path:
             # Step 0. Load model
@@ -113,9 +106,7 @@ def execute_ifeval_response(id: str = "A") -> None:
 
             # Step 3: Generate predictions on the dataset
             output_file: Path = Path(locate_data_path(f"explore-datasets/{id}/ifeval"))
-            clean_model_name: str = clean_string(model_name)
-            clean_dataset_name: str = clean_string(dataset_name)
-            file_name: str = f"{clean_model_name}-{clean_dataset_name}-responses.jsonl"
+            file_name: str = f"{checkpoints_dir}-responses.jsonl"
             file_path: str = str(output_file / file_name)
             with open(file_path, "w", encoding="utf-8") as f_out:
                 for sample in tqdm(
@@ -164,16 +155,21 @@ def execute_ifeval_response(id: str = "A") -> None:
 
 
 def execute_ifeval_evaluation(id: str = "A") -> None:
-    MODEL_NAME: str = "mistralai/Mistral-7B-v0.3"
     input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
     ifeval_folder: Path = Path(locate_data_path("explore-datasets")) / id / "ifeval"
-    for dataset_info in DATASETS:
-        dataset_name: str = dataset_info["name"]
-        clean_model_name: str = clean_string(MODEL_NAME)
-        clean_dataset_name: str = clean_string(dataset_name)
-        clean_mixed_name: str = f"{clean_model_name}-{clean_dataset_name}"
-        responses_data: str = str(ifeval_folder / f"{clean_mixed_name}-responses.jsonl")
-        output_dir: str = str(ifeval_folder / f"{clean_mixed_name}-results")
+    # for dataset_info in DATASETS:
+    #     dataset_name: str = dataset_info["name"]
+    #     clean_model_name: str = clean_string(MODEL_NAME)
+    #     clean_dataset_name: str = clean_string(dataset_name)
+    #     clean_mixed_name: str = f"{clean_model_name}-{clean_dataset_name}"
+    #     responses_data: str = str(ifeval_folder / f"{clean_mixed_name}-responses.jsonl")
+    #     output_dir: str = str(ifeval_folder / f"{clean_mixed_name}-results")
+    #     ifeval_main(input_file, responses_data, output_dir)
+
+    runs_path: str = locate_data_path(f"explore-datasets/{id}/runs")
+    for checkpoints_dir in os.listdir(runs_path):
+        responses_data: str = str(ifeval_folder / f"{checkpoints_dir}-responses.jsonl")
+        output_dir: str = str(ifeval_folder / f"{checkpoints_dir}-results")
         ifeval_main(input_file, responses_data, output_dir)
 
 
@@ -182,4 +178,3 @@ if __name__ == "__main__":
     # execute_performance_benchmark()
     execute_ifeval_response()
     execute_ifeval_evaluation()
-    pass

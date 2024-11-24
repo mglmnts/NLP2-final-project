@@ -20,7 +20,7 @@ model_name: str = "mistralai/Mistral-7B-v0.3"
 # Lista de datasets
 DATASETS: list[dict[str, str]] = [
     # {"name": "GAIR/lima"},
-    {"name": "databricks/databricks-dolly-15k"},
+    # {"name": "databricks/databricks-dolly-15k"},
     {"name": "tatsu-lab/alpaca"},
     {"name": "argilla/ifeval-like-data"},
 ]
@@ -32,13 +32,13 @@ def run_experiment_A(id="A") -> None:
         # Directorio de salida específico para cada dataset
         rel_path: Path = Path("explore-datasets")
         clean_model_name: str = clean_string(model_name)
-        clean_dataset_name: str = clean_string(model_name)
+        clean_dataset_name: str = clean_string(dataset_name)
         rel_path = rel_path / id / "runs" / f"{clean_model_name}-{clean_dataset_name}"
         model_path: str = locate_data_path(rel_path=str(rel_path))
 
         # Training timing control
-        eval_steps: int = 20  # 10
-        save_steps: int = 20  # 45
+        eval_steps: int = 10
+        save_steps: int = 45
         warmup_steps: int = 25
         max_steps: int = 100
 
@@ -46,7 +46,7 @@ def run_experiment_A(id="A") -> None:
         training_arguments: SFTConfig = SFTConfig(
             output_dir=model_path,
             eval_strategy="steps",  # Activate evaluation each "save_steps"
-            do_eval=True,
+            do_eval=False,
             optim="paged_adamw_8bit",
             per_device_train_batch_size=4,
             gradient_accumulation_steps=2,

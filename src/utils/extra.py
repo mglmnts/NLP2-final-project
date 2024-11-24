@@ -79,9 +79,6 @@ def locate_data_path(rel_path: str) -> str:
         FileNotFoundError: If the 'src' directory cannot be located.
     """
     src_path: str = get_src_path()
-    print()
-    print(src_path)
-    print(src_path.parent)
     dir_path: str = os.path.join(src_path.parent, "data", rel_path)
     Path(dir_path).mkdir(parents=True, exist_ok=True)
     return dir_path
@@ -90,7 +87,9 @@ def locate_data_path(rel_path: str) -> str:
 from datasets import Dataset
 
 
-def get_dataset_subset(dataset: Dataset, prop: float, shuffle: bool = True) -> Dataset:
+def get_dataset_subset(
+    dataset: Dataset, prop: float, shuffle: Optional[bool] = True
+) -> Dataset:
     """
     Returns a random subset of the IFEval dataset.
 
