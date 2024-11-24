@@ -9,7 +9,7 @@ from typing import Optional, Type, Union
 import torch
 from datasets import Dataset, DatasetDict, load_dataset, concatenate_datasets
 from peft import LoraConfig, PeftModel, prepare_model_for_kbit_training
-from peft.config import PeftConfig
+from peft.config import PeftConfig, PeftModel
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -20,10 +20,6 @@ from transformers import (
 )
 from transformers.tokenization_utils_base import BatchEncoding
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
-from accelerate import disk_offload
-
-from peft import PeftModel, PeftConfig
-
 
 # Internal dependencies
 from src.utils.extra import load_model_tokenizer
@@ -389,6 +385,7 @@ class ModelInterface:
         )
         self._name = name
         self._model = prepare_model_for_kbit_training(self._model)
+        self._model.to(device=device)
         return None
 
     def load_PEFT_config(self, config: PeftConfig) -> None:
@@ -511,7 +508,7 @@ class ModelInterface:
             base_model_name,
             device_map="auto",
             offload_folder="offload_dir",
-            quantization_config=instance._bnb_config,  # Use the same quantization config
+            quantization_config=instance._bnb_config,  # Use the quantization config
         )
 
         # Prepare the model for k-bit training
