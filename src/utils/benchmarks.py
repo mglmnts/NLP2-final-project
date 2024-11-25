@@ -10,6 +10,9 @@ from transformers.tokenization_utils_base import BatchEncoding
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 from evaluate import load
 
+# Other
+import tqdm
+
 # Standard Library dependencies
 import time
 from typing import Union
@@ -211,9 +214,24 @@ class PerformanceBenchmark:
             Includes size, parameters, time, latency, throughput, and FLOPs estimates.
         """
         metrics: dict = {}
-        metrics["Size"] = self.compute_size()
-        metrics["Parameters"] = self.compute_parameters()
-        metrics["Time"] = self.time_pipeline()
-        metrics["Latency"] = self.compute_latency()
-        metrics["Throughput"] = self.compute_throughput()
+
+        benchmark_steps: list[tuple[str, callable]] = [
+            ("Size", self.compute_size),
+            ("Parameters", self.compute_parameters),
+            ("Time", self.time_pipeline),
+            ("Latency", self.compute_latency),
+            ("Throughput", self.compute_throughput),
+        ]
+
+        with tqdm(
+            total=len(benchmark_steps), desc="Running Benchmarks", unit="step"
+        ) as pbar:
+            for metric_name, func in benchmark_steps:
+                try:
+                    metrics[metric_name] = func()
+                except Exception as e:
+                    metrics[metric_name] = f"Error: {str(e)}"
+                finally:
+                    pbar.update(1)
+
         return metrics
