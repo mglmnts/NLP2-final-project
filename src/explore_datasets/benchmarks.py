@@ -49,6 +49,26 @@ def execute_performance_benchmark(id: str = "A") -> None:
 
             tokenizer: PreTrainedTokenizerFast
             tokenizer = load_model_tokenizer(model_name=model_name)
+
+            # Ensure pad_token_id is set
+            if tokenizer.pad_token_id is None:
+                if tokenizer.eos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.eos_token_id
+                    print(f"Pad Token ID set to EOS Token ID: {tokenizer.pad_token_id}")
+                elif tokenizer.bos_token_id is not None:
+                    tokenizer.pad_token_id = tokenizer.bos_token_id
+                    print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
+                else:
+                    tokenizer.pad_token_id = 0  # Default value
+                    print(
+                        f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
+                    )
+            # Verify and convert pad_token_id to integer if it's a string
+            if isinstance(tokenizer.pad_token_id, str):
+                ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+                tokenizer.pad_token_id = ids
+                print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
+
             dataset_interface: DatasetInterface
             dataset_interface = DatasetInterface(dataset_name=DATASET_NAME)
             dataset_test: Dataset = dataset_interface.raw_dataset["test"]
@@ -112,6 +132,11 @@ def execute_ifeval_response(id: str = "A") -> None:
                     print(
                         f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
                     )
+            # Verify and convert pad_token_id to integer if it's a string
+            if isinstance(tokenizer.pad_token_id, str):
+                ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+                tokenizer.pad_token_id = ids
+                print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
 
             # Step 2: Load the google/IFEval dataset
             dataset: Dataset = load_dataset(path=DATASET_NAME)
