@@ -153,3 +153,42 @@ Los modelos y datasets de Hugging Face pueden ocupar hasta **15 GB** en disco. E
 ```bash
 huggingface-cli delete-cache
 ```
+
+
+
+## 8. Notas git
+
+Forzar un pull independientemente de tener cambios sin haber hecho commit o sin haber hecho push
+
+**Opción 1: Descarta todos los cambios locales y realiza un pull**: 
+
+1. Descartar cambios locales
+   ```bash
+   git reset --hard
+   ```
+2. Realizar el pull
+   ```bash
+   git pull
+   ```
+
+
+**Opción 2: Forzar la actualización del repositorio local con el remoto**: 
+
+1. Actualizar la información del repositorio remoto:
+   ```bash
+   git fetch --all
+   ```
+2. Resetear la rama local para que coincida con la remota
+   ```bash
+   git reset --hard origin/main
+   ```
+
+### **Resumen de las Diferencias Clave**
+
+| **Aspecto**                         | **Opción 1**                                                | **Opción 2**                                                      |
+|-------------------------------------|-------------------------------------------------------------|-------------------------------------------------------------------|
+| **Comportamiento Principal**        | Descarta cambios locales no comprometidos y realiza un pull. | Descarta todos los cambios locales y hace que la rama local coincida exactamente con la remota. |
+| **Alcance de los Cambios**          | Afecta solo cambios no comprometidos.                      | Afecta cambios no comprometidos y también elimina commits locales no enviados al remoto. |
+| **Actualización con el Remoto**     | Fusiona los nuevos commits del remoto con la rama local.    | Restablece la rama local para que coincida exactamente con la rama remota, eliminando cualquier commit local no presente en el remoto. |
+| **Riesgo de Pérdida de Datos**      | Descarta cambios no comprometidos, pero mantiene commits locales. | Descarta todos los cambios locales, incluyendo commits no enviados, lo que puede resultar en mayor pérdida de datos. |
+| **Uso Recomiendo**                  | Cuando solo deseas descartar cambios no comprometidos y mantener los commits locales. | Cuando deseas una sincronización completa con el remoto, eliminando cualquier divergencia local. |
