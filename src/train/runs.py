@@ -16,13 +16,6 @@ from src.utils.extra import clean_string, locate_data_path
 # Global Variables
 device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
-DATASETS: list[str] = [
-    "GAIR/lima",
-    "databricks/databricks-dolly-15k",
-    "tatsu-lab/alpaca",
-    "argilla/ifeval-like-data",
-]
-
 MODELS: list[dict[str, str]] = [
     "meta-llama/Llama-3.1-8B",
     "mistralai/Mistral-7B-v0.3",
@@ -30,10 +23,17 @@ MODELS: list[dict[str, str]] = [
     "ibm-granite/granite-3.0-8b-base",
 ]
 
+DATASETS: list[str] = [
+    "GAIR/lima",
+    "databricks/databricks-dolly-15k",
+    "tatsu-lab/alpaca",
+    "argilla/ifeval-like-data",
+]
+
 
 def run_experiment_A(id="A") -> None:
 
-    model_name: str = MODELS[3]
+    model_name: str = MODELS[1]
     dataset_name: str = DATASETS[3]
     rel_path: Path = Path("final-model-train")
     rel_path = rel_path / id / "runs"
@@ -41,7 +41,7 @@ def run_experiment_A(id="A") -> None:
 
     # Training timing control
     eval_steps: int = 100
-    save_steps: int = 50
+    save_steps: int = 100
     warmup_steps: int = 25
     max_steps: int = 3000
 
@@ -56,12 +56,12 @@ def run_experiment_A(id="A") -> None:
         per_device_eval_batch_size=4,
         log_level="debug",
         logging_steps=10,
-        learning_rate=1e-4,
+        learning_rate=3e-5,
         eval_steps=eval_steps,
         max_steps=max_steps,
         save_steps=save_steps,
         warmup_steps=warmup_steps,
-        lr_scheduler_type="linear",
+        lr_scheduler_type="cosine",
         report_to="tensorboard",
         logging_dir=str(Path(model_path) / "logs"),
         max_seq_length=512,
@@ -69,9 +69,9 @@ def run_experiment_A(id="A") -> None:
 
     # Low-Rank Adaptation (LoRA) configuration for efficient fine-tuning
     peft_config = LoraConfig(
-        lora_alpha=16,  # Scaling factor for LoRA updates
-        lora_dropout=0.05,  # Dropout rate applied to LoRA layers
         r=16,  # Rank of the LoRA decomposition
+        lora_alpha=32,  # Scaling factor for LoRA updates
+        lora_dropout=0.2,  # Dropout rate applied to LoRA layers
         bias="none",  # No bias is added to the LoRA layers
         task_type="CAUSAL_LM",  # Specify the task as causal language modeling
         target_modules=[  # Modules to apply LoRA to
@@ -94,7 +94,7 @@ def run_experiment_A(id="A") -> None:
     model_interface.load_PEFT_config(config=peft_config)
     model_interface.load_dataset(interface=dataset_interface)
 
-    print(f"\n\n\nTraining: {model_name}-{dataset_name}\n")
+    print(f"\n\n\nTraining: {model_name} on {dataset_name}\n")
     model_interface.train(
         method=SFTTrainer,
         arguments=training_arguments,  # , method_config=sft_config

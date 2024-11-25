@@ -147,28 +147,6 @@ class DatasetInterface:
             if col in self._tokenized_dataset.column_names:
                 self._tokenized_dataset = self._tokenized_dataset.remove_columns(col)
 
-        # # Ensure that a 'test' split exists
-        # if not isinstance(self._tokenized_dataset, DatasetDict):
-        #     # If the dataset is not a DatasetDict, convert it to one with only 'train'
-        #     self._tokenized_dataset = DatasetDict({"train": self._tokenized_dataset})
-
-        # if "test" not in self._tokenized_dataset:
-        #     # # Split 20% of 'train' into 'test'
-        #     # test_proportion: float = 0.025
-
-        #     test_sample_count: int = 500
-        #     total_samples: int = len(self._tokenized_dataset["train"])
-        #     test_sample_count = min(test_sample_count, total_samples)
-        #     test_proportion: float = test_sample_count / total_samples
-
-        #     self._tokenized_dataset = self._tokenized_dataset["train"].train_test_split(
-        #         test_size=test_proportion, seed=42
-        #     )
-        #     print(
-        #         f"No 'test' split found."
-        #         f"Split {test_proportion*100:.4f}% of 'train' into 'test'."
-        #     )
-
         # Ensure the format is PyTorch-friendly
         format_columns: list[str] = ["input_ids", "attention_mask"]
         self._tokenized_dataset.set_format(type="torch", columns=format_columns)
@@ -500,6 +478,9 @@ class ModelInterface:
         )
         trainer.train()
 
+        del trainer
+        gc.collect()
+
         return None
 
     def cleanup_model(self) -> None:
@@ -507,15 +488,12 @@ class ModelInterface:
         Cleans up the model from GPU memory and clears any offloaded files.
         """
         if self._model is not None:
+            # Ensure all CUDA operations are finished
+            torch.cuda.synchronize()
             del self._model
             self._model = None
             torch.cuda.empty_cache()
             gc.collect()
-
-            # Elimina archivos de offload
-            offload_folder = "offload_dir"
-            if os.path.exists(offload_folder):
-                shutil.rmtree(offload_folder)
 
     @classmethod
     def from_checkpoint(cls, checkpoint_path: str) -> "ModelInterface":
