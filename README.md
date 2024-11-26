@@ -1,10 +1,42 @@
-# Guía de Instalación para el Proyecto Final de NLP
+# Proyecto Final de NLP
+**Autores:** Miguel Montes y José Ridruejo
 
-**Autor:** Nombre del Autor  
-**Fecha:** 15 de noviembre de 2024  
+Aquí tienes el markdown con las instrucciones para ejecutar el modelo final:
+
+# Instrucciones para ejecutar el modelo final
+
+## 1. Entrenamiento del modelo
+
+Para entrenar el modelo, debes ejecutar el siguiente comando en la terminal:
+
+```bash
+python -m src.train.runs
+```
+
+- **Parámetro `id`**: Si deseas especificar un parámetro `id` diferente para la ejecución, puedes hacerlo añadiendo `--id <tu_id>`. Si no se especifica, el valor por defecto es `"A"`.
+  
+  Ejemplo:
+  ```bash
+  python -m src.train.runs --id "B"
+  ```
+
+- El modelo entrenado se guardará en la siguiente ruta:  
+  `data/final-model-train/<id>/runs`  
+  Los modelos se guardarán como **checkpoints** para poder continuar con el entrenamiento más tarde o realizar evaluaciones.
+
+## 2. Ejecutar el benchmark
+
+Para ejecutar el benchmark del modelo, debes ejecutar el siguiente comando:
+
+```bash
+python -m src.train.benchmarks
+```
+
+**Importante**: Asegúrate de descomentar las llamadas a las funciones de **IFEval** dentro del código para que se realice la evaluación de los resultados. Esto te permitirá obtener métricas de precisión y rendimiento del modelo. Tambien puede ser necesario tener localizado el json que contiene los prompts del ifeval
 
 ---
 
+# Guía de instalación
 ## 1. Introducción
 
 Debido a que el software necesario no está preparado en las máquinas virtuales de Aulas Virtuales, los alumnos pueden acudir físicamente al laboratorio y usar el usuario `usuario`, el cual dispone del software necesario. Sin embargo, no es posible acceder a este usuario a través de Aulas Virtuales. 
