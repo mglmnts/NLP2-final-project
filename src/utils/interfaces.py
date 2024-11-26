@@ -23,6 +23,7 @@ from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 # Internal dependencies
 from src.utils.extra import load_model_tokenizer
+from src.utils.filter_ifeval_data import filter_datset
 
 
 # Custom Types
@@ -61,7 +62,17 @@ class DatasetInterface:
         self._tokenizer: Union[PreTrainedTokenizerFast, None] = None
         self._tokenized_dataset: Union[Dataset, DatasetDict]
 
-        self._dataset = load_dataset(path=dataset_name)
+        if self._dataset_name == "merge":
+            self._dataset = None
+            auto_split = False
+        elif self._dataset_name == "argilla/ifeval-like-data":
+            dataset_name: str = "argilla-warehouse/ifeval-like-data"
+            self._dataset = load_dataset(path=dataset_name, split="train")
+            self._dataset = filter_datset(self._dataset)
+        else:
+            self._dataset = load_dataset(path=dataset_name)
+        # if self._dataset_name == "argilla/ifeval-like-data":
+        #     assert False, self._dataset.keys()
 
         if auto_split:
             self.dataset_split()
@@ -168,7 +179,7 @@ class DatasetInterface:
     def merge(
         cls,
         dataset_paths: list[str],
-        sample_proportions: Optional[list[float]],
+        sample_proportions: Optional[list[float]] = None,
         shuffle: Optional[bool] = True,
         model_name: Optional[Union[AutoModelForCausalLM, PeftModel]] = None,
     ) -> "DatasetInterface":
@@ -213,9 +224,17 @@ class DatasetInterface:
 
         # Load and sample datasets
         datasets: list[Dataset] = []
+        dataset: Dataset
         for path, proportion in zip(dataset_paths, sample_proportions):
-            # Load dataset
-            dataset: DatasetInterface = load_dataset(path)
+            # # Load dataset
+            # dataset: DatasetInterface = load_dataset(path)
+            if path == "argilla/ifeval-like-data":
+                path: str = "argilla-warehouse/ifeval-like-data"
+                dataset = load_dataset(path=path, split="train")
+                dataset = filter_datset(dataset)
+            else:
+                dataset = load_dataset(path=path)
+
             # Use 'train' split if available
             if isinstance(dataset, DatasetDict) and "train" in dataset:
                 dataset = dataset["train"]
@@ -243,7 +262,9 @@ class DatasetInterface:
 
         # Initialize a new DatasetInterface instance with the merged dataset
         dataset_interface: "DatasetInterface"
-        dataset_interface = cls(dataset=merged_dataset, model_name=model_name)
+        dataset_interface = cls(dataset_name="merge", model_name=model_name)
+        dataset_interface._dataset = merged_dataset
+        dataset_interface.dataset_split()
 
         return dataset_interface
 
@@ -304,30 +325,25 @@ class DatasetInterface:
             The tokenized conversations with input_ids and attention_mask.
         """
         joined_conversations: list[str]
-        if all(substr in self._dataset_name.lower() for substr in ["lima"]):
+        # lima
+        if all(substr in examples.keys() for substr in ["conversations"]):
             joined_conversations = [
                 " ".join(conv) if isinstance(conv, list) else conv
                 for conv in examples["conversations"]
             ]
-        if all(substr in self._dataset_name.lower() for substr in ["dolly"]):
 
+        # dolly, ifeval-like
+        if all(substr in examples.keys() for substr in ["instruction", "response"]):
             joined_conversations = [
                 f"{pair[0]} {pair[1]}"
                 for pair in zip(examples["instruction"], examples["response"])
             ]
 
-        if all(substr in self._dataset_name.lower() for substr in ["alpaca"]):
-
+        # alpaca
+        if all(substr in examples.keys() for substr in ["instruction", "output"]):
             joined_conversations = [
                 f"{pair[0]} {pair[1]}"
                 for pair in zip(examples["instruction"], examples["output"])
-            ]
-
-        if all(substr in self._dataset_name.lower() for substr in ["ifeval", "like"]):
-
-            joined_conversations = [
-                f"{pair[0]} {pair[1]}"
-                for pair in zip(examples["instruction"], examples["response"])
             ]
 
         # Tokenize the joined conversations
@@ -463,7 +479,9 @@ class ModelInterface:
                 the model, PEFT config, or dataset are not properly loaded.
         """
         assert isinstance(method, type) and issubclass(method, Trainer)
-        assert issubclass(type(self._model), (PreTrainedModel, PeftModel))
+        assert issubclass(type(self._model), (PreTrainedModel, PeftModel)), type(
+            self._model
+        )
         assert issubclass(type(self._peft_config), PeftConfig)
         assert isinstance(self._dataset, DatasetInterface)
         assert issubclass(type(arguments), TrainingArguments)
