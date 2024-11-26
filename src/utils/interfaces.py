@@ -66,9 +66,9 @@ class DatasetInterface:
             self._dataset = None
             auto_split = False
         elif self._dataset_name == "argilla/ifeval-like-data":
-            dataset_name: str = "argilla-warehouse/ifeval-like-data"
+            # dataset_name: str = "argilla-warehouse/ifeval-like-data"
             self._dataset = load_dataset(path=dataset_name, split="train")
-            self._dataset = filter_datset(self._dataset)
+            # self._dataset = filter_datset(self._dataset)
         else:
             self._dataset = load_dataset(path=dataset_name)
         # if self._dataset_name == "argilla/ifeval-like-data":
@@ -229,9 +229,8 @@ class DatasetInterface:
             # # Load dataset
             # dataset: DatasetInterface = load_dataset(path)
             if path == "argilla/ifeval-like-data":
-                path: str = "argilla-warehouse/ifeval-like-data"
                 dataset = load_dataset(path=path, split="train")
-                dataset = filter_datset(dataset)
+                # dataset = filter_datset(dataset)
             else:
                 dataset = load_dataset(path=path)
 

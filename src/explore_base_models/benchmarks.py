@@ -59,12 +59,10 @@ def execute_performance_benchmark(id: str = "A") -> None:
                 print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
             else:
                 tokenizer.pad_token_id = 0  # Default value
-                print(
-                    f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
-                )
+                print(f"Pad Token ID set to default value: {tokenizer.pad_token_id}")
         # Verify and convert pad_token_id to integer if it's a string
         if isinstance(tokenizer.pad_token_id, str):
-            ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+            ids = tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
             tokenizer.pad_token_id = ids
             print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
 
@@ -119,13 +117,11 @@ def execute_ifeval_response(id: str = "A") -> None:
                 print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
             else:
                 tokenizer.pad_token_id = 0  # Default value
-                print(
-                    f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
-                )
+                print(f"Pad Token ID set to default value: {tokenizer.pad_token_id}")
 
         # Verify and convert pad_token_id to integer if it's a string
         if isinstance(tokenizer.pad_token_id, str):
-            ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+            ids = tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
             tokenizer.pad_token_id = ids
             print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
 
@@ -166,7 +162,7 @@ def execute_ifeval_response(id: str = "A") -> None:
                     attention_mask=att_mask.to(dtype=torch.long, device=device),
                     max_new_tokens=max_lenght,
                     eos_token_id=tokenizer.eos_token_id,
-                    pad_token_id=tokenizer.pad_token_id
+                    pad_token_id=tokenizer.pad_token_id,
                 )
 
                 # Decode output
@@ -193,14 +189,11 @@ def execute_ifeval_response(id: str = "A") -> None:
         gc.collect()
 
 
-
-
-
 def execute_ifeval_evaluation(id: str = "A") -> None:
     input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
     ifeval_folder: Path = Path(locate_data_path("explore-base-models")) / id / "ifeval"
     for model_info in MODELS:
-        filename: str = f"{clean_string(model_info["name"])}-pretrained"
+        filename: str = f"{clean_string(model_info['name'])}-pretrained"
         responses_data: str = str(ifeval_folder / f"{filename}-responses.jsonl")
         output_dir: str = str(ifeval_folder / f"{filename}-results")
         ifeval_main(input_file, responses_data, output_dir)

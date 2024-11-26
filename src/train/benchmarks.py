@@ -7,7 +7,10 @@ from typing import Optional, Union
 
 # ML dependencies
 import torch
+from torch._tensor import Tensor
 from datasets import Dataset, load_dataset
+from transformers.tokenization_utils_base import BatchEncoding
+from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 # Other dependencies
 from tqdm import tqdm
@@ -17,8 +20,6 @@ from src.utils.interfaces import DatasetInterface, ModelInterface
 from src.utils.benchmarks import PerformanceBenchmark
 from src.utils.extra import (
     load_model_tokenizer,
-    clean_string,
-    get_src_path,
     locate_data_path,
     get_dataset_subset,
     ensure_punkt_available,
@@ -30,8 +31,8 @@ device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def execute_performance_benchmark(
-        id: str = "A", checkpoint_dir_name: Optional[str] = None
-    ) -> None:
+    id: str = "A", checkpoint_dir_name: Optional[str] = None
+) -> None:
     DATASET_NAME: str = "argilla/ifeval-like-data"
     dir_name: Union[str, None] = checkpoint_dir_name  # force checkpoint directory name
 
@@ -42,10 +43,10 @@ def execute_performance_benchmark(
     if dir_name is None and len(checkpoints) > 0:
         dir_name = checkpoints[-1]
         assert isinstance(dir_name, str)
-        
+
     if dir_name is not None:
         assert isinstance(dir_name, str)
-        checkpoint_path = os.path.join(runs_path, dir_name)
+        checkpoint_path: str = os.path.join(runs_path, dir_name)
         model_interface: ModelInterface
         model_interface = ModelInterface.from_checkpoint(
             checkpoint_path=checkpoint_path
@@ -53,7 +54,26 @@ def execute_performance_benchmark(
         model: str = model_interface.model
         model_name: str = model_interface.name
 
-        tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
+        tokenizer: PreTrainedTokenizerFast = load_model_tokenizer(model_name=model_name)
+        if tokenizer.pad_token_id is None:
+            if tokenizer.eos_token_id is not None:
+                tokenizer.pad_token_id = tokenizer.eos_token_id
+                print(f"Pad Token ID set to EOS Token ID: {tokenizer.pad_token_id}")
+            elif tokenizer.bos_token_id is not None:
+                tokenizer.pad_token_id = tokenizer.bos_token_id
+                print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
+            else:
+                tokenizer.pad_token_id = 0  # Default value
+                print(
+                    f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
+                )
+
+        # Verify and convert pad_token_id to integer if it's a string
+        if isinstance(tokenizer.pad_token_id, str):
+            ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+            tokenizer.pad_token_id = ids
+            print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
+
         dataset: Dataset = load_dataset(path=DATASET_NAME)
         benchmark = PerformanceBenchmark(model, tokenizer, dataset["test"])
         results: dict = benchmark.run_benchmark()
@@ -78,8 +98,8 @@ def execute_performance_benchmark(
 
 
 def execute_ifeval_response(
-        id: str = "A", checkpoint_dir_name: Optional[str] = None
-    ) -> None:
+    id: str = "A", checkpoint_dir_name: Optional[str] = None
+) -> None:
 
     DATASET_NAME: str = "google/IFEval"
     dir_name: Union[str, None] = checkpoint_dir_name  # force checkpoint directory name
@@ -91,10 +111,10 @@ def execute_ifeval_response(
     if dir_name is None and len(checkpoints) > 0:
         dir_name = checkpoints[-1]
         assert isinstance(dir_name, str)
-        
+
     if dir_name is not None:
         assert isinstance(dir_name, str)
-        checkpoint_path = os.path.join(runs_path, dir_name)
+        checkpoint_path: str: str = os.path.join(runs_path, dir_name)
 
         # Step 0. Load model
         torch.cuda.empty_cache()
@@ -106,7 +126,26 @@ def execute_ifeval_response(
         model_name: str = model_interface.name
 
         # Step 1: Load tokenizer
-        tokenizer: Dataset = load_model_tokenizer(model_name=model_name)
+        tokenizer: PreTrainedTokenizerFast = load_model_tokenizer(model_name=model_name)
+        if tokenizer.pad_token_id is None:
+            if tokenizer.eos_token_id is not None:
+                tokenizer.pad_token_id = tokenizer.eos_token_id
+                print(f"Pad Token ID set to EOS Token ID: {tokenizer.pad_token_id}")
+            elif tokenizer.bos_token_id is not None:
+                tokenizer.pad_token_id = tokenizer.bos_token_id
+                print(f"Pad Token ID set to BOS Token ID: {tokenizer.pad_token_id}")
+            else:
+                tokenizer.pad_token_id = 0  # Default value
+                print(
+                    f"Pad Token ID set to default value: {tokenizer.pad_token_id}"
+                )
+
+        # Verify and convert pad_token_id to integer if it's a string
+        if isinstance(tokenizer.pad_token_id, str):
+            ids =  tokenizer.convert_tokens_to_ids(tokenizer.pad_token_id)
+            tokenizer.pad_token_id = ids
+            print(f"Converted pad_token_id to integer: {tokenizer.pad_token_id}")
+
         # Step 2: Load the google/IFEval dataset
         dataset: Dataset = load_dataset(path=DATASET_NAME)
         dataset = get_dataset_subset(dataset["train"], prop=0.4, shuffle=False)
@@ -119,35 +158,41 @@ def execute_ifeval_response(
             for sample in tqdm(
                 dataset
             ):  # Use 'validation' or 'train' split if 'test' is not available
-                input_text = sample[
-                    "prompt"
-                ]  # Adjust the field name based on the dataset's structure
-
-                # Prepare the input prompt
-                prompt: str = input_text
+                # Adjust the field name ("prompt") based on the dataset's structure
+                input_text: str = sample["prompt"]
+                max_lenght: int = 256
+                prompt: str = input_text[:max_lenght]  # prepare the input prompt
 
                 # Tokenize input
-                inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                # inputs = tokenizer.encode(prompt, return_tensors="pt").to(device)
+                inputs: BatchEncoding = tokenizer(
+                    prompt,
+                    truncation=True,
+                    max_length=max_lenght,
+                    return_tensors="pt",
+                )
+                input_ids: Tensor = inputs["input_ids"]
+                att_mask: Tensor = inputs["attention_mask"]
 
-                # Generate output
                 outputs = model.generate(
-                    inputs,
-                    # attention_mask=inputs["attention_mask"],
-                    max_length=256,
+                    input_ids=input_ids.to(dtype=torch.long, device=device),
+                    attention_mask=att_mask.to(dtype=torch.long, device=device),
+                    max_new_tokens=max_lenght,
                     eos_token_id=tokenizer.eos_token_id,
+                    pad_token_id=tokenizer.pad_token_id,
                 )
 
                 # Decode output
-                generated_text = tokenizer.decode(
+                generated_text: str = tokenizer.decode(
                     outputs[0], skip_special_tokens=True
                 )
 
                 # Since the model may include the prompt in its output, we extract the
                 # generated response
-                response = generated_text[len(prompt) :]
+                response: str = generated_text[len(prompt) :]
 
                 # Prepare the JSON object
-                json_obj = {"prompt": prompt, "response": response}
+                json_obj: dict = {"prompt": prompt, "response": response}
 
                 # Write the JSON object to file
                 f_out.write(json.dumps(json_obj) + "\n")
@@ -162,8 +207,8 @@ def execute_ifeval_response(
 
 
 def execute_ifeval_evaluation(
-        id: str = "A", checkpoint_dir_name: Optional[str] = None
-        ) -> None:
+    id: str = "A", checkpoint_dir_name: Optional[str] = None
+) -> None:
     dir_name: Union[str, None] = checkpoint_dir_name  # force checkpoint directory name
 
     input_file = str(Path(locate_data_path("datasets")) / "ifeval.jsonl")
@@ -190,6 +235,6 @@ if __name__ == "__main__":
 
     # BENCHMARKS
     # execute_performance_benchmark()
-    # execute_ifeval_response()
-    # execute_ifeval_evaluation()
+    execute_ifeval_response()
+    execute_ifeval_evaluation()
     pass
